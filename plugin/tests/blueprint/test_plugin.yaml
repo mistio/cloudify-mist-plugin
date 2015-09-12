@@ -43,6 +43,20 @@ node_types:
         create:
           implementation: mist.plugin.server.create
           inputs:
+            username: 
+              default: vkefallinos@gmail.com
+            password:
+              default: y9YY&R^B2Ncw$s!8%DJ
+            backend_id:
+              default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
+            image_id:
+              default: ami-fe8f2889
+            size_id:
+              default: t1.micro
+            location_id:
+              default: '0'
+            name:
+              default: test_server  
             args:
               default: {}
             openstack_config:
@@ -63,16 +77,23 @@ node_types:
               default: ''
             openstack_config:
               default: {}
-#        stop:
-#          implementation: mist.server.stop
-#          inputs:
-#            openstack_config:
-#              default: {}
+        stop:
+          implementation: mist.plugin.server.stop
+          inputs:
+            openstack_config:
+              default: {}
+        delete:
+          implementation: mist.plugin.server.delete
+          inputs:
+            openstack_config:
+              default: {}
+        # get_state:
+        #   implementation: mist.plugin.server.delete
+        #   inputs:
+        #     openstack_config:
+        #       default: {}
+              
 #        delete:
-#          implementation: mist.server.delete
-#          inputs:
-#            openstack_config:
-#              default: {}
 #      cloudify.interfaces.validation:
 #        creation:
 #          implementation: mist.server.creation_validation

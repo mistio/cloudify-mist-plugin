@@ -20,8 +20,10 @@ class TestPlugin(unittest.TestCase):
 
         # extract single node instance
         instance = cfy_local.storage.get_node_instances()[0]
-
+        print  instance
         # assert runtime properties is properly set in node instance
+        cfy_local.execute('uninstall', task_retries=10)
+        print instance.runtime_properties['probe']
         self.assertEqual(instance.runtime_properties['some_property'],
                          'new_test_input')
         raise AssertionError()
