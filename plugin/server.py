@@ -8,14 +8,25 @@ from time import sleep
 @operation
 def create(**kwargs):
 	client = MistClient(email=kwargs['username'], password=kwargs['password'])
+	ctx.instance.runtime_properties['mist_client']=client
 	backend = client.backends(id=kwargs['backend_id'])[0]
 	if "key" in kwargs:
-		key=client.keys(search=kwargs["key"])[0]
+		key=client.keys(search=kwargs["key"])
+		if len(key):
+			key=key[0]
+		else:
+			raise NonRecoverableError("key not found")
 	else:
-		key = client.keys(search=kwargs["name"])[0]
+		keys = client.keys()
+		for k in keys:
+			if k.is_default:
+				ctx.logger.info('Using default key ')
+				key=k 
 		if not key:
+			ctx.logger.info('No key found. Trying to generate one and add one.')
 			private = client.generate_key()
 			client.add_key(key_name=kwargs["name"], private=private)
+			key=client.keys(search=kwargs["name"])[0]
 	uid=uuid.uuid4().hex	
 	ctx.instance.runtime_properties['name']=kwargs["name"]+uid	
 	job_id=backend.create_machine(async=True,name=kwargs["name"]+uid, key=key, image_id=kwargs["image_id"], location_id=kwargs["location_id"], size_id=kwargs["size_id"])
