@@ -35,13 +35,11 @@ def create(**kwargs):
 	while True:
 		if job["summary"]["probe"]["success"]:
 			break
-		if job["summary"]["create"]["error"] or  job["summary"]["probe"]["error"]:
+		if job["summary"]["create"]["error"] or job["summary"]["probe"]["error"]:
 			ctx.logger.error('Error on machine creation ')
 			raise NonRecoverableError("Not able to create machine")
-
 		sleep(10)
 		job=client.get_job(job_id)	
-		print "state::::::::::" ,job["logs"][1]
 	backend.update_machines()
 	machine= backend.machines(search=kwargs["name"]+uid)[0]
 	ctx.instance.runtime_properties['machine']=machine
@@ -49,25 +47,24 @@ def create(**kwargs):
 	ctx.instance.runtime_properties['name']=machine.info["name"]
 	ctx.instance.runtime_properties['ip']=machine.info["public_ips"][0]
 	ctx.instance.runtime_properties['networks']={"default":machine.info["public_ips"][0]}
+	ctx.logger.info('Machine created')
 
 
 @operation
 def start(**kwargs):
-	
 	ctx.instance.runtime_properties['machine'].start()
-	# probe=ctx.instance.runtime_properties['machine'].probe()
-	# ctx.instance.runtime_properties['probe']=probe		
-	# probe=ctx.instance.runtime_properties['machine'].probe()
-	# print probe
-	print 'start', kwargs
+	ctx.logger.info('Machine started')
+
 @operation
 def stop(**kwargs):
 	ctx.instance.runtime_properties['machine'].stop()
-	print 'stop', kwargs
+	ctx.logger.info('Machine stopped')
+
 @operation
 def delete(**kwargs):
 	ctx.instance.runtime_properties['machine'].destroy()
-	print 'destroy', kwargs
+	ctx.logger.info('Machine destroyed')
+
 
 	
 
