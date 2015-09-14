@@ -43,10 +43,10 @@ node_types:
         create:
           implementation: mist.plugin.server.create
           inputs:
-            username: 
+            username:
               default: vkefallinos@gmail.com
             password:
-              default: y9YY&R^B2Ncw$s!8%DJ
+              default: '@*#^*TswF*7z^pNDwAa'
             backend_id:
               default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
             image_id:
@@ -56,7 +56,7 @@ node_types:
             location_id:
               default: '0'
             name:
-              default: test_server  
+              default: test_server
             args:
               default: {}
             openstack_config:
@@ -92,7 +92,7 @@ node_types:
         #   inputs:
         #     openstack_config:
         #       default: {}
-              
+
 #        delete:
 #      cloudify.interfaces.validation:
 #        creation:
