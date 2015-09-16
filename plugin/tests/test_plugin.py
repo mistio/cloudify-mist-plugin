@@ -22,10 +22,9 @@ class TestPlugin(unittest.TestCase):
         instance = cfy_local.storage.get_node_instances()[0]
         print  instance
         # assert runtime properties is properly set in node instance
-        cfy_local.execute('uninstall', task_retries=10)
-        print instance.runtime_properties['probe']
-        self.assertEqual(instance.runtime_properties['some_property'],
-                         'new_test_input')
+        cfy_local.execute('uninstall', task_retries=0)
+        assert instance.runtime_properties['ip']
+        
         raise AssertionError()
 
         ## assert deployment outputs are ok

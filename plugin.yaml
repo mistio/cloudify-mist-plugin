@@ -1,42 +1,33 @@
 plugins:
-    # Name could be anything, this name is what appears on the beginning of operation
-    # mappings.
     mist:
-        # Could be 'central_deployment_agent' or 'host_agent'.
-        # If 'central_deployment_agent', this plugin will be executed on the
-        # deployment dedicated agent, other wise it will be executed on the host agent.
-        # We set it the 'central_deployment_agent' here because 'host_agent' plugins should
-        # be contained in a host and this is not required for testing purposes
         executor: central_deployment_agent
-
-        # Setting install to false in testing environment. In the non-test plugin definition
-        # this property could be omitted usually (its default is true), in which case
-        # the source property should be set
-        install: false
-
-        # source: URL to archive containing the plugin or name of directory containing
-        #         the plugin if it is included in the the blueprint directory under the
-        #         "plugins" directory. Not required in testing environments as the plugin
-        #         need not be installed on any agent
+        # source:https://
+        # install: false
 node_types:
   cloudify.mist.nodes.Server:
     derived_from: cloudify.nodes.Compute
     properties:
-      server:
-        default: {}
+      username:
+        default: ''
+      password:
+        default: ''
+      backend_id:
+        default: ''
+      image_id:
+        default: ''
+      size_id: 
+        default: ''
+      location_id:
+        default: ''
+      name:
+        default: ''
+      key:
+        default: ''              
       use_external_resource:
         default: false
       resource_id:
         default: ''
-      image:
-        default: ''
-      flavor:
-        default: ''
-      management_network_name:
-        default: ''
-      use_password:
-        default: false
-      openstack_config:
+      mist_config:
         default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -45,7 +36,7 @@ node_types:
           inputs:
             args:
               default: {}
-            openstack_config:
+            mist_config:
               default: {}
         start:
           implementation: mist.plugin.server.start
@@ -61,24 +52,56 @@ node_types:
                 the "use_password" property is set to "true"
               type: string
               default: ''
+            mist_config:
+              default: {}
+        stop:
+          implementation: mist.plugin.server.stop
+          inputs:
+            mist_config:
+              default: {}
+        delete:
+          implementation: mist.plugin.server.delete
+          inputs:
+            mist_config:
+              default: {}
+      cloudify.interfaces.validation:
+        creation:
+          implementation: mist.plugin.server.creation_validation
+          inputs:
+            args:
+              default: {}
             openstack_config:
               default: {}
-#        stop:
-#          implementation: mist.server.stop
-#          inputs:
-#            openstack_config:
-#              default: {}
-#        delete:
-#          implementation: mist.server.delete
-#          inputs:
-#            openstack_config:
-#              default: {}
-#      cloudify.interfaces.validation:
-#        creation:
-#          implementation: mist.server.creation_validation
-#          inputs:
-#            args:
-#              default: {}
-#            openstack_config:
-#              default: {}
+        
 
+  cloudify.mist.nodes.KeyPair:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          Either the name or ID of the resource in Cloudify. If this is an existing
+          resource, you should provide the name or the ID of the resource in Amazon AWS.
+        type: string
+        default: ''
+      private_key_path:
+        description: >
+          The path where the key should be saved on the machine. If this is a bootstrap
+          process, this refers to the local computer. If this will run on the manager,
+          this will be saved on the manager.
+        type: string
+        default: ''
+      mist_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Mist API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: mist.plugin.keypair.create
+        delete: mist.plugin.keypair.delete
+      cloudify.interfaces.validation:
+        creation: mist.plugin.keypair.creation_validation

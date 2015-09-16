@@ -9,6 +9,7 @@ imports:
     # instead.
     - http://www.getcloudify.org/spec/cloudify/3.3m5/types.yaml
     # relative import of plugin.yaml that resides in the blueprint directory
+    - http://www.getcloudify.org/spec/fabric-plugin/1.1/plugin.yaml
     - test_plugin.yaml
 
 inputs:
@@ -23,17 +24,16 @@ node_templates:
         # using base cloudify type
         type: cloudify.mist.nodes.Server    # cloudify.nodes.Root
         properties:
-            install_agent: false
-            # interfaces:
-                # cloudify.interfaces.lifecycle:
-                #     start:
-                #        # here we map the single plugin task to the start operation
-                #        # of the cloudify.interfaces.lifecycle interface
-                #         implementation: mist.plugin.server.start
-                #         inputs:
-                #            some_property: { get_input: test_input }
-                #     stop:       
-                #         implementation: mist.plugin.server.stop
+            install_agent: False
+        # interfaces:
+        #     start:
+        #         implementation: fabric.fabric_plugin.tasks.run_commands
+        #         inputs:
+        #             commands:
+        #                 - apt-get install -y curl
+        #                 - curl -X PUT http://mistio.iriscouch.com/demo
+        #     stop:       
+        #         implementation: mist.plugin.server.stop
     #outputs:
     #    # example output the could be used to simplify assertions by test
     #    test_output:

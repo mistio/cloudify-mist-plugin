@@ -6,6 +6,7 @@ import os
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify.decorators import operation
+import connection
 
 
 @operation
@@ -59,10 +60,10 @@ def create(**kwargs):
         private = mist_client.generate_key()
         mist_client.add_key(key_name=key_pair_name, private=private)
         mist_client.update_keys()
-        kp=mist_client.keys(search=key_pair_name)[0]
+        kp = mist_client.keys(search=key_pair_name)[0]
     except e:
         raise NonRecoverableError('Key pair not created. {0}'.format(str(e)))
-	ctx.instance.runtime_properties["mist_resource_id"] = kp.id
+        ctx.instance.runtime_properties["mist_resource_id"] = kp.id
     _save_key_pair(kp)
 
 
@@ -70,7 +71,7 @@ def create(**kwargs):
 def delete(**kwargs):
     """Deletes a keypair."""
 
-	mist_client = ctx.instance.runtime_properties['mist_client']
+        mist_client = ctx.instance.runtime_properties['mist_client']
 
     key_pair_name = get_external_resource_id_or_raise(
         'delete key pair')
@@ -194,7 +195,7 @@ def _get_key_pair_by_id(key_pair_id):
     :raises NonRecoverableError: If Mist finds no matching key pairs.
     """
     mist_client = ctx.instance.runtime_properties['mist_client']
-    
+
     try:
         key_pairs = mist_client.keys(search=key_pair_id)
     except e:
@@ -226,7 +227,6 @@ def _search_for_key_file(path_to_key_file):
     return True if os.path.exists(path_to_key_file) else False
 
 
-
 def get_resource_id():
     """Returns the resource id, if the user doesn't provide one,
     this will create one for them.
@@ -241,7 +241,6 @@ def get_resource_id():
             os.path.split(ctx.node.properties['private_key_path'])
         resource_id, filetype = filename.split('.')
         return resource_id
-
 
 
 def get_external_resource_id_or_raise(operation):
@@ -263,6 +262,7 @@ def get_external_resource_id_or_raise(operation):
             .format(operation, "mist_resource_id"))
 
     return ctx.instance.runtime_properties["mist_resource_id"]
+
 
 def unassign_runtime_property_from_resource(property_name):
     """Pops a runtime_property and reports to debug.
