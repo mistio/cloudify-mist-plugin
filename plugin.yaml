@@ -1,7 +1,7 @@
 plugins:
     mist:
         executor: central_deployment_agent
-        source:https://github.com/mistio/cloudify-mist-plugin/archive/testing.zip
+        source: "https://github.com/mistio/cloudify-mist-plugin/archive/testing.zip"
 
 node_types:
   cloudify.mist.nodes.Server:
