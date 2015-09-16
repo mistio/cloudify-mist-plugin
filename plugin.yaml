@@ -1,8 +1,8 @@
 plugins:
     mist:
         executor: central_deployment_agent
-        # source:https://
-        # install: false
+        source:https://github.com/mistio/cloudify-mist-plugin/archive/testing.zip
+
 node_types:
   cloudify.mist.nodes.Server:
     derived_from: cloudify.nodes.Compute
