@@ -20,11 +20,19 @@ inputs:
 
 node_templates:
     # defining a single node template that will serve as our test node
+    # test_key_template:
+    #     type: cloudify.mist.nodes.KeyPair
+    #     properties:
+    #         use_external_resource: false
+    #         resource_id: tester
+    #         private_key_path: 'ssh_keys/id-rsa'
     test_node_template:
         # using base cloudify type
         type: cloudify.mist.nodes.Server    # cloudify.nodes.Root
         properties:
             install_agent: False
+
+
         # interfaces:
         #     start:
         #         implementation: fabric.fabric_plugin.tasks.run_commands

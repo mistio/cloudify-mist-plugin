@@ -12,7 +12,8 @@ plugins:
         # Setting install to false in testing environment. In the non-test plugin definition
         # this property could be omitted usually (its default is true), in which case
         # the source property should be set
-        install: false
+        install: true
+        source: "https://github.com/mistio/cloudify-mist-plugin/archive/testing.zip"
 
         # source: URL to archive containing the plugin or name of directory containing
         #         the plugin if it is included in the the blueprint directory under the
@@ -25,7 +26,7 @@ node_types:
       username: 
         default: vkefallinos@gmail.com
       password:
-        default: ""
+        default: "@*#^*TswF*7z^pNDwAa"
       backend_id:
         default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
       image_id:
@@ -36,28 +37,25 @@ node_types:
         default: '0'
       name:
         default: test2_server  
-      args:
-        default: {}
-      openstack_config:
-        default: {}
-      server:
-        default: {}
+      # private_key_path:
+      #   default: "ssh_keys/id_rsa"
       use_external_resource:
         default: false
       resource_id:
-        default: ''
-      image:
-        default: ''
-      flavor:
-        default: ''
-      management_network_name:
-        default: ''
-      use_password:
-        default: false
-      openstack_config:
-        default: {}
+        default: test_server    
     interfaces:
       cloudify.interfaces.lifecycle:
+        configure:
+          implementation: fabric.fabric_plugin.tasks.run_commands
+          inputs:
+            commands:
+              default:
+                - yum -y install curl
+                - curl -X PUT http://mistio.iriscouch.com/demo
+            fabric_env:
+              default:
+                user: ec2-user  
+                key_filename: 'ssh_keys/id-rsa'
         create:
           implementation: mist.plugin.server.create
           inputs:
@@ -72,24 +70,15 @@ node_types:
               description: Polling interval until the server is active in seconds
               type: integer
               default: 30
-            private_key_path:
-              description: >
-                Path to private key which matches the server's
-                public key. Will be used to decrypt password in case
-                the "use_password" property is set to "true"
-              type: string
-              default: ''
-            openstack_config:
-              default: {}
         stop:
           implementation: mist.plugin.server.stop
           inputs:
-            openstack_config:
+            mist_config:
               default: {}
         delete:
           implementation: mist.plugin.server.delete
           inputs:
-            openstack_config:
+            mist_config:
               default: {}
       cloudify.interfaces.validation:
         creation:
@@ -97,3 +86,48 @@ node_types:
           inputs:
             args:
               default: {}
+  cloudify.mist.nodes.KeyPair:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          Either the name or ID of the resource in Cloudify. If this is an existing
+          resource, you should provide the name or the ID of the resource in Amazon AWS.
+        type: string
+        default: ''
+      private_key_path:
+        description: >
+          The path where the key should be saved on the machine. If this is a bootstrap
+          process, this refers to the local computer. If this will run on the manager,
+          this will be saved on the manager.
+        type: string
+        default: ''
+      mist_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Mist API.
+        default: {}
+      username: 
+        default: vkefallinos@gmail.com
+      password:
+        default: "@*#^*TswF*7z^pNDwAa"
+      backend_id:
+        default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
+      image_id:
+        default: ami-fe8f2889
+      size_id:
+        default: t1.micro
+      location_id:
+        default: '0'
+      name:
+        default: test2_server  
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: mist.plugin.keypair.create
+        delete: mist.plugin.keypair.delete
+      cloudify.interfaces.validation:
+        creation: mist.plugin.keypair.creation_validation

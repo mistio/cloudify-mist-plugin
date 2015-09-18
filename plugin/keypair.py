@@ -47,7 +47,7 @@ def creation_validation(**_):
 def create(**kwargs):
     """Creates a keypair."""
 
-    mist_client = ctx.instance.runtime_properties['mist_client']
+    mist_client = connection.MistConnectionClient().client
 
     if _create_external_keypair():
         return
@@ -56,14 +56,14 @@ def create(**kwargs):
 
     ctx.logger.debug('Attempting to create key pair.')
 
-    try:
-        private = mist_client.generate_key()
-        mist_client.add_key(key_name=key_pair_name, private=private)
-        mist_client.update_keys()
-        kp = mist_client.keys(search=key_pair_name)[0]
-    except e:
-        raise NonRecoverableError('Key pair not created. {0}'.format(str(e)))
-        ctx.instance.runtime_properties["mist_resource_id"] = kp.id
+    private = mist_client.generate_key()
+    mist_client.add_key(key_name=key_pair_name, private=private)
+    mist_client.update_keys()
+    kp = mist_client.keys(search=key_pair_name)[0]
+    # try:
+    # except:
+    #     raise NonRecoverableError('Key pair not created. ')
+    #     ctx.instance.runtime_properties["mist_resource_id"] = kp.id
     _save_key_pair(kp)
 
 
@@ -71,7 +71,7 @@ def create(**kwargs):
 def delete(**kwargs):
     """Deletes a keypair."""
 
-        mist_client = ctx.instance.runtime_properties['mist_client']
+    mist_client = connection.MistConnectionClient().client
 
     key_pair_name = get_external_resource_id_or_raise(
         'delete key pair')
@@ -99,7 +99,7 @@ def _create_external_keypair():
     :return True: External resource. Set runtime_properties. Ignore operation.
     :raises NonRecoverableError: If unable to locate the existing key file.
     """
-
+    print "create external keypair"
     if not use_external_resource(ctx.node.properties):
         return False
 
@@ -194,7 +194,7 @@ def _get_key_pair_by_id(key_pair_id):
     :returns The mist keypair object.
     :raises NonRecoverableError: If Mist finds no matching key pairs.
     """
-    mist_client = ctx.instance.runtime_properties['mist_client']
+    mist_client = connection.MistConnectionClient().client
 
     try:
         key_pairs = mist_client.keys(search=key_pair_id)
@@ -274,3 +274,30 @@ def unassign_runtime_property_from_resource(property_name):
     value = ctx.instance.runtime_properties.pop(property_name)
     ctx.logger.debug(
         'Unassigned {0} runtime property: {1}'.format(property_name, value))
+
+
+def is_external_resource(properties):
+    return is_external_resource_by_properties(properties)
+
+def is_external_resource_by_properties(properties):
+    return 'use_external_resource' in properties and \
+        properties['use_external_resource']
+
+def use_external_resource(properties):
+    if not is_external_resource(properties):
+        return None
+
+    if not "resource_id" in properties or not properties["resource_id"]:
+        raise NonRecoverableError(
+            'External resource, but resource not set.')
+    ctx.logger.debug(
+        'Resource Id: {0}'.format(properties["resource_id"]))    
+    return True
+        
+
+
+def set_external_resource_id(value):
+    """Sets the EXTERNAL_RESOURCE_ID runtime_property for a Node-Instance.
+    """
+    ctx.instance.runtime_properties["mist_resource_id"] = value
+       

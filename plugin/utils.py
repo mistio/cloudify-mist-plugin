@@ -20,3 +20,5 @@ def get_resource_id():
         return resource_id
 
     return '{0}-{1}'.format(ctx.deployment.id, ctx.instance.id)
+
+

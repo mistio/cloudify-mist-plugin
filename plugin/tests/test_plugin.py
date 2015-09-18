@@ -24,8 +24,8 @@ class TestPlugin(unittest.TestCase):
 
         assert prop.get('ip'), "No ip set in runtime properties."
         assert prop.get('networks'), "No network set in runtime properties."
-
+        assert prop.get('private_key_path'), "No private key path set in runtime properties."
         """Test uninstall workflow"""
-        cfy_local.execute('uninstall', task_retries=10)
+        # cfy_local.execute('uninstall', task_retries=10)
 
         assert False

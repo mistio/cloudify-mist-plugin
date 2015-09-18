@@ -5,7 +5,7 @@ from cloudify.exceptions import NonRecoverableError
 
 class MistConnectionClient(object):
 
-    """Provides functions for getting the EC2 Client
+    """Provides functions for getting the Mist Client
     """
 
     def __init__(self):
