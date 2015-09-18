@@ -2,11 +2,10 @@ from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from mistclient import MistClient
-import uuid
 from time import sleep
 import connection
 import constants
-
+import keypair
 
 @operation
 def creation_validation(**_):
@@ -98,6 +97,8 @@ def create(**_):
             if m.info["state"] in  ["running","stopped"]:
                 raise NonRecoverableError(
                     "Machine with name {0} exists".format(ctx.node.properties["name"]))
+    
+    key=""
     if "key" in ctx.node.properties:
         key = client.keys(search=ctx.node.properties["key"])
         if len(key):
@@ -117,6 +118,7 @@ def create(**_):
             client.add_key(
                 key_name=ctx.node.properties["name"], private=private)
             key = client.keys(search=ctx.node.properties["name"])[0]
+    print key        
     job_id = backend.create_machine(async=True, name=ctx.node.properties["name"], key=key,
                                     image_id=ctx.node.properties["image_id"],
                                     location_id=ctx.node.properties[
@@ -124,6 +126,7 @@ def create(**_):
         size_id=ctx.node.properties["size_id"])
     job_id = job_id.json()["job_id"]
     job = client.get_job(job_id)
+    timer=0
     while True:
         if job["summary"]["probe"]["success"]:
             break
@@ -132,7 +135,11 @@ def create(**_):
             raise NonRecoverableError("Not able to create machine")
         sleep(10)
         job = client.get_job(job_id)
-
+        print job["summary"]
+        timer+=1
+        if timer >=60:   # timeout
+            raise NonRecoverableError("Timeout.Not able to create machine.")
+    
     machine = mist_client.machine
     ctx.instance.runtime_properties['ip'] = machine.info["public_ips"][0]
     ctx.instance.runtime_properties['networks'] = {
