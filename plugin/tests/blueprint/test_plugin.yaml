@@ -114,7 +114,7 @@ node_types:
       username: 
         default: vkefallinos@gmail.com
       password:
-        default: "@*#^*TswF*7z^pNDwAa"
+        default: ''
       backend_id:
         default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
       image_id:
