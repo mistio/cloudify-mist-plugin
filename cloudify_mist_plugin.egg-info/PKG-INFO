@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: cloudify-mist-plugin
+Version: 0.0.1
+Summary: Cloudify plugin for Mist infrastructure.
+Home-page: UNKNOWN
+Author: mist
+Author-email: info@mist.io
+License: LICENSE
+Description: UNKNOWN
+Platform: UNKNOWN

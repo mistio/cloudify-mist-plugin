@@ -20,17 +20,28 @@ inputs:
 
 node_templates:
     # defining a single node template that will serve as our test node
-    # test_key_template:
-    #     type: cloudify.mist.nodes.KeyPair
-    #     properties:
-    #         use_external_resource: false
-    #         resource_id: tester
-    #         private_key_path: 'ssh_keys/id-rsa'
+    test_key_template:
+        type: cloudify.mist.nodes.KeyPair
+        properties:
+            use_external_resource: true
+            resource_id: tester_key
+            private_key_path: 'ssh_keys/id-rsa'
     test_node_template:
         # using base cloudify type
         type: cloudify.mist.nodes.Server    # cloudify.nodes.Root
         properties:
-            install_agent: False
+            install_agent: false
+            use_external_resource: true
+            resource_id: i-98ab7034
+            key: tester_key
+            username: ""
+            password: ""
+            backend_id: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
+            image_id: ami-fe8f2889
+            size_id: t1.micro
+            location_id: '0'
+            name: test3_server 
+            monitoring: true
 
 
         # interfaces:

@@ -24,25 +24,29 @@ node_types:
     derived_from: cloudify.nodes.Compute
     properties:
       username: 
-        default: vkefallinos@gmail.com
+        default: ''
       password:
-        default: "@*#^*TswF*7z^pNDwAa"
+        default: ''
       backend_id:
-        default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
+        default: ''
       image_id:
-        default: ami-fe8f2889
+        default: ''
       size_id:
-        default: t1.micro
+        default: ''
       location_id:
-        default: '0'
+        default: ''
       name:
-        default: test2_server  
-      # private_key_path:
-      #   default: "ssh_keys/id_rsa"
+        default: '' 
+      private_key_path:
+        default: ''
       use_external_resource:
         default: false
       resource_id:
-        default: test_server    
+        default: ''
+      key:
+        default: ''  
+      monitoring:
+        default: false  
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -50,8 +54,7 @@ node_types:
           inputs:
             commands:
               default:
-                - yum -y install curl
-                - curl -X PUT http://mistio.iriscouch.com/demo
+                - touch vasilisrules
             fabric_env:
               default:
                 user: ec2-user  
