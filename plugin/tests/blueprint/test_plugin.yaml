@@ -26,11 +26,7 @@ node_types:
       username: 
         default: ''
       password:
-<<<<<<< HEAD
         default: ''
-=======
-        default: ""
->>>>>>> 18ace644ad2d4bad6dfc8c64be596584e56ac8c5
       backend_id:
         default: ''
       image_id:
