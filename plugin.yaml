@@ -69,48 +69,8 @@ node_types:
         description: >
           A dictionary of values to pass to authenticate with the Mist API.
         default: {}
-      # username: 
-      #   default: ''
-      # password:
-      #   default: ''
-      # backend_id:
-      #   default: ''
-      # image_id:
-      #   default: ''
-      # size_id:
-      #   default: ''
-      # location_id:
-      #   default: ''
-      # name:
-      #   default: '' 
-      # private_key_path:
-      #   default: ''
-      # use_external_resource:
-      #   default: false
-      # resource_id:
-      #   default: ''
-      # key:
-      #   default: ''  
-      # monitoring:
-      #   default: false  
-      # ssh_user:
-      #   default: ''
-
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure:
-          implementation: fabric.fabric_plugin.tasks.run_commands
-          inputs:
-            commands:
-              default:
-                - sudo yum update -y
-                - sudo yum install -y httpd24 php56 mysql55-server php56-mysqlnd
-                - sudo service httpd start
-                - touch apache_installed
-            fabric_env:
-              default:
-                user: ec2-user  
-                key_filename: 'ssh_keys/id-rsa'
         create:
           implementation: mist.plugin.server.create
           inputs:

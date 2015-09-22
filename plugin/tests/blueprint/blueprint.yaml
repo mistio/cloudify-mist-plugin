@@ -38,7 +38,7 @@ inputs:
         default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
     image_id:
         description: an input for the test
-        default: ami-fe8f2889
+        default: ami-5da23a2a
     size_id:
         description: an input for the test
         default: t1.micro
