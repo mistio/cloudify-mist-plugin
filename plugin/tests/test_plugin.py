@@ -2,6 +2,7 @@ import os
 import unittest
 
 from cloudify.test_utils import workflow_test
+from time import sleep
 
 
 class TestPlugin(unittest.TestCase):
@@ -28,4 +29,4 @@ class TestPlugin(unittest.TestCase):
         """Test uninstall workflow"""
         # cfy_local.execute('uninstall', task_retries=10)
 
-        assert False
+        # assert False

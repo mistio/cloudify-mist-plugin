@@ -20,33 +20,96 @@ plugins:
         #         "plugins" directory. Not required in testing environments as the plugin
         #         need not be installed on any agent
 node_types:
+  cloudify.mist.nodes.KeyPair:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          Either the name or ID of the resource in Cloudify. If this is an existing
+          resource, you should provide the name or the ID of the resource in Amazon AWS.
+        type: string
+        default: ''
+      private_key_path:
+        description: >
+          The path where the key should be saved on the machine. If this is a bootstrap
+          process, this refers to the local computer. If this will run on the manager,
+          this will be saved on the manager.
+        type: string
+        default: ''
+      parameters:
+        description: >
+          The key value pair parameters required by Mist Client to use 
+          the mist.client.backend.create_machine command.(backend_id,image_id
+          size_id, location_id, name, monitoring, ssh_user )
+        default: {}
+      mist_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Mist API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: mist.plugin.keypair.create
+        delete: mist.plugin.keypair.delete
+      cloudify.interfaces.validation:
+        creation: mist.plugin.keypair.creation_validation
+
+
   cloudify.mist.nodes.Server:
     derived_from: cloudify.nodes.Compute
     properties:
-      username: 
-        default: ''
-      password:
-        default: ''
-      backend_id:
-        default: ''
-      image_id:
-        default: ''
-      size_id:
-        default: ''
-      location_id:
-        default: ''
-      name:
-        default: '' 
-      private_key_path:
-        default: ''
       use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
         default: false
       resource_id:
+        description: >
+          Either the name or ID of the resource in Cloudify. If this is an existing
+          resource, you should provide the name or the ID of the resource in Mist.io.
+        type: string
         default: ''
-      key:
-        default: ''  
-      monitoring:
-        default: false  
+      parameters:
+        description: >
+          The key value pair parameters required by Mist Client to use 
+          the mist.client.backend.create_machine command.(backend_id,image_id
+          size_id, location_id, name, monitoring, ssh_user )
+        default: {}
+      mist_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Mist API.
+        default: {}
+      # username: 
+      #   default: ''
+      # password:
+      #   default: ''
+      # backend_id:
+      #   default: ''
+      # image_id:
+      #   default: ''
+      # size_id:
+      #   default: ''
+      # location_id:
+      #   default: ''
+      # name:
+      #   default: '' 
+      # private_key_path:
+      #   default: ''
+      # use_external_resource:
+      #   default: false
+      # resource_id:
+      #   default: ''
+      # key:
+      #   default: ''  
+      # monitoring:
+      #   default: false  
+      # ssh_user:
+      #   default: ''
+
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -54,7 +117,10 @@ node_types:
           inputs:
             commands:
               default:
-                - touch vasilisrules
+                - sudo yum update -y
+                - sudo yum install -y httpd24 php56 mysql55-server php56-mysqlnd
+                - sudo service httpd start
+                - touch apache_installed
             fabric_env:
               default:
                 user: ec2-user  
@@ -62,9 +128,9 @@ node_types:
         create:
           implementation: mist.plugin.server.create
           inputs:
-            args:
-              default: {}
-            openstack_config:
+            use_external_resource:
+              default: false
+            mist_config:
               default: {}
         start:
           implementation: mist.plugin.server.start
@@ -89,48 +155,8 @@ node_types:
           inputs:
             args:
               default: {}
-  cloudify.mist.nodes.KeyPair:
-    derived_from: cloudify.nodes.Root
-    properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists or if Cloudify should create the resource.
-        type: boolean
-        default: false
-      resource_id:
-        description: >
-          Either the name or ID of the resource in Cloudify. If this is an existing
-          resource, you should provide the name or the ID of the resource in Amazon AWS.
-        type: string
-        default: ''
-      private_key_path:
-        description: >
-          The path where the key should be saved on the machine. If this is a bootstrap
-          process, this refers to the local computer. If this will run on the manager,
-          this will be saved on the manager.
-        type: string
-        default: ''
-      mist_config:
-        description: >
-          A dictionary of values to pass to authenticate with the Mist API.
-        default: {}
-      username: 
-        default: vkefallinos@gmail.com
-      password:
-        default: ''
-      backend_id:
-        default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
-      image_id:
-        default: ami-fe8f2889
-      size_id:
-        default: t1.micro
-      location_id:
-        default: '0'
-      name:
-        default: test2_server  
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create: mist.plugin.keypair.create
-        delete: mist.plugin.keypair.delete
-      cloudify.interfaces.validation:
-        creation: mist.plugin.keypair.creation_validation
+ 
+relationships:
+  cloudify.mist.relationships.server_connected_to_keypair:
+    derived_from: cloudify.relationships.connected_to
+

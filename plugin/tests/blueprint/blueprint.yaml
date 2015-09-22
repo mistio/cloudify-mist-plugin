@@ -8,6 +8,7 @@ imports:
     # including it in the blueprint directory and importing it
     # instead.
     - http://www.getcloudify.org/spec/cloudify/3.3m5/types.yaml
+    - http://www.getcloudify.org/spec/diamond-plugin/1.3m5/plugin.yaml
     # relative import of plugin.yaml that resides in the blueprint directory
     - http://www.getcloudify.org/spec/fabric-plugin/1.1/plugin.yaml
     - test_plugin.yaml
@@ -17,44 +18,88 @@ inputs:
     test_input:
         description: an input for the test
         default: default_test_input
+    ssh_user:
+        description: an input for the test
+        default: ec2-user
+    private_key_path:
+        description: an input for the test
+        default: ssh_keys/id-rsa
+    username:
+        description: an input for the test
+        default: 'vkefallinos@gmail.com'
+    password:
+        description: an input for the test
+        default: '6#X%*CqNmZbCfb^wyuC'
+    key_name:
+        description: an input for the test
+        default: lamp_test_keys
+    backend_id:
+        description: an input for the test
+        default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
+    image_id:
+        description: an input for the test
+        default: ami-fe8f2889
+    size_id:
+        description: an input for the test
+        default: t1.micro
+    location_id:
+        description: an input for the test
+        default: '0'
+    key_external_resource:
+        description: an input for the test
+        default: false
+    node_external_resource:
+        description: an input for the test
+        default: false   
+    monitoring:
+        description: an input for the test
+        default: false
+    name:
+        description: an input for the test
+        default: lamptest
+    node_external_resource_id:
+        description: an input for the test
+        default: i-9122843d
+
 
 node_templates:
     # defining a single node template that will serve as our test node
-    test_key_template:
+    test_server_key:
         type: cloudify.mist.nodes.KeyPair
         properties:
-            use_external_resource: true
-            resource_id: tester_key
-            private_key_path: 'ssh_keys/id-rsa'
-    test_node_template:
+            use_external_resource: { get_input: key_external_resource }
+            resource_id: { get_input: key_name }
+            private_key_path: { get_input: private_key_path }
+            mist_config:
+                username: { get_input: username }
+                password: { get_input: password }            
+            parameters:
+                backend_id: { get_input: backend_id }
+                image_id: { get_input: image_id }
+                size_id: { get_input: size_id }
+                location_id: { get_input: location_id }
+                name: { get_input: name } 
+                monitoring: { get_input: monitoring }    
+    test_server_node:
         # using base cloudify type
         type: cloudify.mist.nodes.Server    # cloudify.nodes.Root
         properties:
             install_agent: false
-            use_external_resource: true
-            resource_id: i-98ab7034
-            key: tester_key
-            username: ""
-            password: ""
-            backend_id: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
-            image_id: ami-fe8f2889
-            size_id: t1.micro
-            location_id: '0'
-            name: test3_server 
-            monitoring: true
+            use_external_resource: { get_input: node_external_resource }
+            resource_id: { get_input: node_external_resource_id }
+            parameters:
+                key_name: { get_input: key_name }
+                backend_id: { get_input: backend_id }
+                image_id: { get_input: image_id }
+                size_id: { get_input: size_id }
+                location_id: { get_input: location_id }
+                name: { get_input: name } 
+                monitoring: { get_input: monitoring }
+            mist_config:
+                username: { get_input: username }
+                password: { get_input: password }
+        relationships:
+            - target: test_server_key
+              type: cloudify.mist.relationships.server_connected_to_keypair
 
 
-        # interfaces:
-        #     start:
-        #         implementation: fabric.fabric_plugin.tasks.run_commands
-        #         inputs:
-        #             commands:
-        #                 - apt-get install -y curl
-        #                 - curl -X PUT http://mistio.iriscouch.com/demo
-        #     stop:       
-        #         implementation: mist.plugin.server.stop
-    #outputs:
-    #    # example output the could be used to simplify assertions by test
-    #    test_output:
-    #        description: an output for the test
-    #        value: { get_attribute: [test_node_template, some_property] }

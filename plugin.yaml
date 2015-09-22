@@ -6,78 +6,6 @@ plugins:
         source: "https://github.com/mistio/cloudify-mist-plugin/archive/testing.zip"
 
 node_types:
-  cloudify.mist.nodes.Server:
-    derived_from: cloudify.nodes.Compute
-    properties:
-      username:
-        default: ''
-      password:
-        default: ''
-      backend_id:
-        default: ''
-      image_id:
-        default: ''
-      size_id: 
-        default: ''
-      location_id:
-        default: ''
-      name:
-        default: ''
-      key:
-        default: ''              
-      use_external_resource:
-        default: false
-      resource_id:
-        default: ''
-      monitoring:
-        default: false  
-      mist_config:
-        default: {}
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: mist.plugin.server.create
-          inputs:
-            args:
-              default: {}
-            mist_config:
-              default: {}
-        start:
-          implementation: mist.plugin.server.start
-          inputs:
-            start_retry_interval:
-              description: Polling interval until the server is active in seconds
-              type: integer
-              default: 30
-            private_key_path:
-              description: >
-                Path to private key which matches the server's
-                public key. Will be used to decrypt password in case
-                the "use_password" property is set to "true"
-              type: string
-              default: ''
-            mist_config:
-              default: {}
-        stop:
-          implementation: mist.plugin.server.stop
-          inputs:
-            mist_config:
-              default: {}
-        delete:
-          implementation: mist.plugin.server.delete
-          inputs:
-            mist_config:
-              default: {}
-      cloudify.interfaces.validation:
-        creation:
-          implementation: mist.plugin.server.creation_validation
-          inputs:
-            args:
-              default: {}
-            openstack_config:
-              default: {}
-        
-
   cloudify.mist.nodes.KeyPair:
     derived_from: cloudify.nodes.Root
     properties:
@@ -99,6 +27,12 @@ node_types:
           this will be saved on the manager.
         type: string
         default: ''
+      parameters:
+        description: >
+          The key value pair parameters required by Mist Client to use 
+          the mist.client.backend.create_machine command.(backend_id,image_id
+          size_id, location_id, name, monitoring, ssh_user )
+        default: {}
       mist_config:
         description: >
           A dictionary of values to pass to authenticate with the Mist API.
@@ -109,3 +43,106 @@ node_types:
         delete: mist.plugin.keypair.delete
       cloudify.interfaces.validation:
         creation: mist.plugin.keypair.creation_validation
+
+
+  cloudify.mist.nodes.Server:
+    derived_from: cloudify.nodes.Compute
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          Either the name or ID of the resource in Cloudify. If this is an existing
+          resource, you should provide the name or the ID of the resource in Mist.io.
+        type: string
+        default: ''
+      parameters:
+        description: >
+          The key value pair parameters required by Mist Client to use 
+          the mist.client.backend.create_machine command.(backend_id,image_id
+          size_id, location_id, name, monitoring, ssh_user )
+        default: {}
+      mist_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Mist API.
+        default: {}
+      # username: 
+      #   default: ''
+      # password:
+      #   default: ''
+      # backend_id:
+      #   default: ''
+      # image_id:
+      #   default: ''
+      # size_id:
+      #   default: ''
+      # location_id:
+      #   default: ''
+      # name:
+      #   default: '' 
+      # private_key_path:
+      #   default: ''
+      # use_external_resource:
+      #   default: false
+      # resource_id:
+      #   default: ''
+      # key:
+      #   default: ''  
+      # monitoring:
+      #   default: false  
+      # ssh_user:
+      #   default: ''
+
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: fabric.fabric_plugin.tasks.run_commands
+          inputs:
+            commands:
+              default:
+                - sudo yum update -y
+                - sudo yum install -y httpd24 php56 mysql55-server php56-mysqlnd
+                - sudo service httpd start
+                - touch apache_installed
+            fabric_env:
+              default:
+                user: ec2-user  
+                key_filename: 'ssh_keys/id-rsa'
+        create:
+          implementation: mist.plugin.server.create
+          inputs:
+            use_external_resource:
+              default: false
+            mist_config:
+              default: {}
+        start:
+          implementation: mist.plugin.server.start
+          inputs:
+            start_retry_interval:
+              description: Polling interval until the server is active in seconds
+              type: integer
+              default: 30
+        stop:
+          implementation: mist.plugin.server.stop
+          inputs:
+            mist_config:
+              default: {}
+        delete:
+          implementation: mist.plugin.server.delete
+          inputs:
+            mist_config:
+              default: {}
+      cloudify.interfaces.validation:
+        creation:
+          implementation: mist.plugin.server.creation_validation
+          inputs:
+            args:
+              default: {}
+ 
+relationships:
+  cloudify.mist.relationships.server_connected_to_keypair:
+    derived_from: cloudify.relationships.connected_to
+

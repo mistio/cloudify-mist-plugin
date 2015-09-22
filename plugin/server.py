@@ -91,39 +91,48 @@ def create(**_):
             "default": machine.info["public_ips"][0]}
         ctx.logger.info('External machine attached to ctx')
         return
-    machines = backend.machines(search=ctx.node.properties["name"])
+    machines = backend.machines(search=ctx.node.properties['parameters']["name"])
     if len(machines):
         for m in machines:
             if m.info["state"] in  ["running","stopped"]:
                 raise NonRecoverableError(
-                    "Machine with name {0} exists".format(ctx.node.properties["name"]))
+                    "Machine with name {0} exists".format(ctx.node.properties['parameters']["name"]))
     
     key=""
-    if ctx.node.properties.get("key"):
-        key = client.keys(search=ctx.node.properties["key"])
+    if ctx.node.properties['parameters'].get("key_name"):
+        key = client.keys(search=ctx.node.properties['parameters']["key_name"])
         if len(key):
             key = key[0]
         else:
+            # private = client.generate_key()
+            # client.add_key(
+            #     key_name=ctx.node.properties["key"], private=private)
+            # key = client.keys(search=ctx.node.properties["key"])[0]
+            # ctx.logger.info('Creating key with key name: {0} .'.format(ctx.node.properties["key"]))
+
             raise NonRecoverableError("key not found")
     else:
-        keys = client.keys()
-        for k in keys:
-            if k.is_default:
-                ctx.logger.info('Using default key ')
-                key = k
-        if not key:
-            ctx.logger.info(
-                'No key found. Trying to generate one and add one.')
-            private = client.generate_key()
-            client.add_key(
-                key_name=ctx.node.properties["name"], private=private)
-            key = client.keys(search=ctx.node.properties["name"])[0]
-    print 'Key:',key         
-    job_id = backend.create_machine(async=True, name=ctx.node.properties["name"], key=key,
-                                    image_id=ctx.node.properties["image_id"],
-                                    location_id=ctx.node.properties[
+        raise NonRecoverableError("key not found")
+        # keys = client.keys()
+        # for k in keys:
+        #     if k.is_default:
+        #         ctx.logger.info('Using default key ')
+        #         key = k
+        # if not key:
+        #     ctx.logger.info(
+        #         'No key found. Trying to generate one and add one.')
+        #     private = client.generate_key()
+        #     client.add_key(
+        #         key_name=ctx.node.properties["name"], private=private)
+        #     key = client.keys(search=ctx.node.properties["name"])[0]
+    print 'Key:',key
+
+    job_id = backend.create_machine(async=True, name=ctx.node.properties['parameters']["name"],
+                                    key=key,
+                                    image_id=ctx.node.properties['parameters']["image_id"],
+                                    location_id=ctx.node.properties['parameters'][
         "location_id"],
-        size_id=ctx.node.properties["size_id"])
+        size_id=ctx.node.properties['parameters']["size_id"])
     job_id = job_id.json()["job_id"]
     job = client.get_job(job_id)
     timer=0

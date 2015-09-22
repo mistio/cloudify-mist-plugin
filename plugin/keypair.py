@@ -55,11 +55,15 @@ def create(**kwargs):
     key_pair_name = get_resource_id()
 
     ctx.logger.debug('Attempting to create key pair.')
+    kp=mist_client.keys(search=key_pair_name)
+    if len(kp):
+        kp = kp[0]
+    else:    
+        private = mist_client.generate_key()
+        mist_client.add_key(key_name=key_pair_name, private=private)
+        mist_client.update_keys()
+        kp = mist_client.keys(search=key_pair_name)[0]
 
-    private = mist_client.generate_key()
-    mist_client.add_key(key_name=key_pair_name, private=private)
-    mist_client.update_keys()
-    kp = mist_client.keys(search=key_pair_name)[0]
     # try:
     # except:
     #     raise NonRecoverableError('Key pair not created. ')
@@ -112,8 +116,9 @@ def _create_external_keypair():
         raise NonRecoverableError(
             'External resource, but the key pair is not in the account.')
     if not _search_for_key_file(key_path_in_filesystem):
-        raise NonRecoverableError(
-            'External resource, but the key file does not exist.')
+        _save_key_pair(key_pair_in_account)
+        # raise NonRecoverableError(
+        #     'External resource, but the key file does not exist.')
     set_external_resource_id(key_pair_name)
     return True
 
@@ -196,10 +201,10 @@ def _get_key_pair_by_id(key_pair_id):
     """
     mist_client = connection.MistConnectionClient().client
 
-    try:
-        key_pairs = mist_client.keys(search=key_pair_id)
-    except e:
-        raise NonRecoverableError('{0}'.format(str(e)))
+    key_pairs = mist_client.keys(search=key_pair_id)
+    # try:
+    # except:
+    #     raise NonRecoverableError('key {0} not found'.format(key_pair_id))
 
     return key_pairs[0] if key_pairs else None
 

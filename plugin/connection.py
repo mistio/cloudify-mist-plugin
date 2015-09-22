@@ -18,8 +18,8 @@ class MistConnectionClient(object):
         """Represents the MistConnection Client
         """
         if self._client is None:
-            self._client = MistClient(email=ctx.node.properties['username'],
-                                      password=ctx.node.properties['password'])
+            self._client = MistClient(email=ctx.node.properties['mist_config']['username'],
+                                      password=ctx.node.properties['mist_config']['password'])
         return self._client
 
     @property
@@ -28,7 +28,7 @@ class MistConnectionClient(object):
         """
         if self._backend is None:
             self._backend = self.client.backends(
-                id=ctx.node.properties['backend_id'])[0]
+                id=ctx.node.properties['parameters']['backend_id'])[0]
         return self._backend
 
     @property
@@ -47,12 +47,14 @@ class MistConnectionClient(object):
                 raise NonRecoverableError(
                     "External resource not found")
             if machines[0].info["state"] in ["error","terminated"]:
-            	raise NonRecoverableError(
+                raise NonRecoverableError(
                     "External resource state {0}".format(machines[0].info["state"]))    
             return machines[0]
+
+            
         if ctx.instance.runtime_properties.get('machine_id'):
             return self.backend.machines(id=ctx.instance.runtime_properties['machine_id'])[0]
-        machines = self.backend.machines(search=ctx.node.properties["name"])
+        machines = self.backend.machines(search=ctx.node.properties['parameters']["name"])
         if len(machines) > 1:
             ctx.logger.info('Found multiple machines with the same name')
             for m in machines:
