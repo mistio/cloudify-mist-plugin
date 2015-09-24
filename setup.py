@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='cloudify-mist-plugin',
-    version='0.0.4',
+    version='0.0.5',
     author='mist',
     author_email='info@mist.io',
     description='Cloudify plugin for Mist infrastructure.',
