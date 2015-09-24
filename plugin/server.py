@@ -7,7 +7,8 @@ import connection
 import constants
 import keypair
 import os
-import string , random
+import string
+import random
 
 
 @operation
@@ -194,13 +195,13 @@ def run_script(**kwargs):
     script = kwargs.get('script', '')
     name = kwargs.get("name", '')
     scripts = client.get_scripts()
+    machine = connection.MistConnectionClient().machine
     if kwargs.get("script_id", ''):
         script_id = kwargs["script_id"]
         return client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
                                  machine_id=ctx.instance.runtime_properties[
                                      'machine_id'],
                                  params=kwargs.get("params", ""))
-            
 
     if kwargs.get("exec_type", ''):
         exec_type = kwargs["exec_type"]
@@ -224,8 +225,9 @@ def run_script(**kwargs):
             location_type = 'inline'
     # if not name:
     if not name:
-        uid=''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(4))
-        name = ctx.node.properties["parameters"]["name"]+uid
+        uid = ''.join(
+            random.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+        name = ctx.node.properties["parameters"]["name"] + uid
 
     for s in scripts:
         if s['name'] == name:
@@ -236,9 +238,9 @@ def run_script(**kwargs):
     print response
     script_id = response['script_id']
     if kwargs.get("params", ""):
-        params=kwargs["params"]
+        params = kwargs["params"]
         return client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
-                                 machine_id=ctx.instance.runtime_properties['machine_id'],params=params)
+                                 machine_id=ctx.instance.runtime_properties['machine_id'], params=params)
     else:
         return client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
                                  machine_id=ctx.instance.runtime_properties['machine_id'])
