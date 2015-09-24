@@ -26,10 +26,10 @@ inputs:
         default: ssh_keys/id-rsa
     username:
         description: an input for the test
-        default: 'vkefallinos@gmail.com'
+        default: ''
     password:
         description: an input for the test
-        default: '6#X%*CqNmZbCfb^wyuC'
+        default: ''
     key_name:
         description: an input for the test
         default: demo_lamp
