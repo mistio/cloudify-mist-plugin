@@ -32,7 +32,7 @@ inputs:
         default: '6#X%*CqNmZbCfb^wyuC'
     key_name:
         description: an input for the test
-        default: lamp_test_keys
+        default: demo_lamp
     backend_id:
         description: an input for the test
         default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
@@ -47,10 +47,10 @@ inputs:
         default: '0'
     key_external_resource:
         description: an input for the test
-        default: false
+        default: true
     node_external_resource:
         description: an input for the test
-        default: false   
+        default: true   
     monitoring:
         description: an input for the test
         default: false
@@ -59,7 +59,7 @@ inputs:
         default: lamptest
     node_external_resource_id:
         description: an input for the test
-        default: i-9122843d
+        default: i-6859fbc4
 
 
 node_templates:

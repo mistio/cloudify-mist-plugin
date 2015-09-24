@@ -6,10 +6,12 @@ from time import sleep
 import connection
 import constants
 import keypair
+import os
+import string , random
+
 
 @operation
 def creation_validation(**_):
-
     """ This checks that all user supplied info is valid """
     ctx.logger.info('Checking validity of info')
     mist_client = connection.MistConnectionClient()
@@ -89,16 +91,20 @@ def create(**_):
         ctx.instance.runtime_properties['ip'] = machine.info["public_ips"][0]
         ctx.instance.runtime_properties['networks'] = {
             "default": machine.info["public_ips"][0]}
+        print machine.info
+        ctx.instance.runtime_properties['machine_id'] = machine.info["id"]
+
         ctx.logger.info('External machine attached to ctx')
         return
-    machines = backend.machines(search=ctx.node.properties['parameters']["name"])
+    machines = backend.machines(
+        search=ctx.node.properties['parameters']["name"])
     if len(machines):
         for m in machines:
-            if m.info["state"] in  ["running","stopped"]:
+            if m.info["state"] in ["running", "stopped"]:
                 raise NonRecoverableError(
                     "Machine with name {0} exists".format(ctx.node.properties['parameters']["name"]))
-    
-    key=""
+
+    key = ""
     if ctx.node.properties['parameters'].get("key_name"):
         key = client.keys(search=ctx.node.properties['parameters']["key_name"])
         if len(key):
@@ -125,17 +131,18 @@ def create(**_):
         #     client.add_key(
         #         key_name=ctx.node.properties["name"], private=private)
         #     key = client.keys(search=ctx.node.properties["name"])[0]
-    print 'Key:',key
+    print 'Key:', key
 
     job_id = backend.create_machine(async=True, name=ctx.node.properties['parameters']["name"],
                                     key=key,
-                                    image_id=ctx.node.properties['parameters']["image_id"],
+                                    image_id=ctx.node.properties[
+                                        'parameters']["image_id"],
                                     location_id=ctx.node.properties['parameters'][
         "location_id"],
         size_id=ctx.node.properties['parameters']["size_id"])
     job_id = job_id.json()["job_id"]
     job = client.get_job(job_id)
-    timer=0
+    timer = 0
     while True:
         if job["summary"]["probe"]["success"]:
             break
@@ -145,11 +152,12 @@ def create(**_):
         sleep(10)
         job = client.get_job(job_id)
         print job["summary"]
-        timer+=1
-        if timer >=60:   # timeout
+        timer += 1
+        if timer >= 60:   # timeout
             raise NonRecoverableError("Timeout.Not able to create machine.")
-    
+
     machine = mist_client.machine
+    ctx.instance.runtime_properties['machine_id'] = machine.info["id"]
     ctx.instance.runtime_properties['ip'] = machine.info["public_ips"][0]
     ctx.instance.runtime_properties['networks'] = {
         "default": machine.info["public_ips"][0]}
@@ -157,7 +165,7 @@ def create(**_):
 
 
 @operation
-def start(**kwargs):
+def start(**_):
     connection.MistConnectionClient().machine.start()
     ctx.logger.info('Machine started')
     if ctx.node.properties.get("monitoring"):
@@ -166,16 +174,71 @@ def start(**kwargs):
 
 
 @operation
-def stop(**kwargs):
+def stop(**_):
     connection.MistConnectionClient().machine.stop()
     ctx.logger.info('Machine stopped')
 
 
 @operation
-def delete(**kwargs):
+def delete(**_):
     connection.MistConnectionClient().machine.destroy()
     ctx.logger.info('Machine destroyed')
 
 
 # @operation
 # def creation_validation(nova_client, args, **kwargs):
+@operation
+def run_script(**kwargs):
+    print "scriptttttttttt:", kwargs
+    client = connection.MistConnectionClient().client
+    script = kwargs.get('script', '')
+    name = kwargs.get("name", '')
+    scripts = client.get_scripts()
+    if kwargs.get("script_id", ''):
+        script_id = kwargs["script_id"]
+        return client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
+                                 machine_id=ctx.instance.runtime_properties[
+                                     'machine_id'],
+                                 params=kwargs.get("params", ""))
+            
+
+    if kwargs.get("exec_type", ''):
+        exec_type = kwargs["exec_type"]
+    else:
+        exec_type = "executable"
+
+    if kwargs.get("location_type", ""):
+        location_type = kwargs["location_type"]
+    else:
+        if (script.startswith('http://github.com') or script.startswith('https://github.com')):
+            location_type = 'github'
+        elif (script.startswith('http://') or script.startswith('https://')):
+            location_type = 'url'
+        elif os.path.exists(script):
+            if not name:
+                name = script.split("/").pop()
+            location_type = 'inline'
+            with open(script, "r") as scriptfile:
+                script = scriptfile.read()
+        elif script.startswith("#!"):
+            location_type = 'inline'
+    # if not name:
+    if not name:
+        uid=''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+        name = ctx.node.properties["parameters"]["name"]+uid
+
+    for s in scripts:
+        if s['name'] == name:
+            raise NonRecoverableError("Script with name {0} exists. Rename the script \
+                                        or use external resource.".format(name))
+    response = client.add_script(
+        name=name, script=script, location_type=location_type, exec_type=exec_type)
+    print response
+    script_id = response['script_id']
+    if kwargs.get("params", ""):
+        params=kwargs["params"]
+        return client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
+                                 machine_id=ctx.instance.runtime_properties['machine_id'],params=params)
+    else:
+        return client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
+                                 machine_id=ctx.instance.runtime_properties['machine_id'])

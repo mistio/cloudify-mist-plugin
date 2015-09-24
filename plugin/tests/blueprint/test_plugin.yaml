@@ -113,18 +113,10 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: fabric.fabric_plugin.tasks.run_commands
+          implementation: mist.plugin.server.run_script
           inputs:
-            commands:
-              default:
-                - sudo yum update -y
-                - sudo yum install -y httpd24 php56 mysql55-server php56-mysqlnd
-                - sudo service httpd start
-                - touch apache_installed
-            fabric_env:
-              default:
-                user: ec2-user  
-                key_filename: 'ssh_keys/id-rsa'
+            script:
+              default: hello.sh
         create:
           implementation: mist.plugin.server.create
           inputs:
