@@ -37,7 +37,7 @@ class MistConnectionClient(object):
         """
         self.backend.update_machines()
 
-        if ctx.node.properties['use_external_resource']:
+        if ctx.node.properties.get('use_external_resource',''):
             ctx.logger.info('use external resource enabled')
             if not ctx.node.properties["resource_id"]:
                 raise NonRecoverableError(
