@@ -189,7 +189,7 @@ def delete(**_):
 # def creation_validation(nova_client, args, **kwargs):
 @operation
 def run_script(**kwargs):
-    print "scriptttttttttt:", kwargs["ctx"].node.properties
+    print "scriptttttttttt:", kwargs["ctx"].instance.runtime_properties
     client = connection.MistConnectionClient().client
     script = kwargs.get('script', '')
     name = kwargs.get("name", '')
