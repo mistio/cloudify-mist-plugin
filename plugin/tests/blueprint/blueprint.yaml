@@ -26,13 +26,13 @@ inputs:
         default: ssh_keys/id-rsa
     username:
         description: an input for the test
-        default: ''
+        default: 'vkefallinos@gmail.com'
     password:
         description: an input for the test
-        default: ''
+        default: 'faN$r3vn4Z%vwFYfy^b'
     key_name:
         description: an input for the test
-        default: demo_lamp
+        default: demo_lamp_de
     backend_id:
         description: an input for the test
         default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
@@ -50,7 +50,7 @@ inputs:
         default: true
     node_external_resource:
         description: an input for the test
-        default: true   
+        default: true  
     monitoring:
         description: an input for the test
         default: false
@@ -59,7 +59,7 @@ inputs:
         default: lamptest
     node_external_resource_id:
         description: an input for the test
-        default: i-6859fbc4
+        default: i-ac8c2300
 
 
 node_templates:
