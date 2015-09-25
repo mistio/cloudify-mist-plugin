@@ -85,14 +85,12 @@ def creation_validation(**_):
 def create(**_):
     mist_client = connection.MistConnectionClient()
     client = mist_client.client
-    # backend = client.backends(id=ctx.node.properties['backend_id'])[0]
     backend = mist_client.backend
     if ctx.node.properties['use_external_resource']:
         machine = mist_client.machine
         ctx.instance.runtime_properties['ip'] = machine.info["public_ips"][0]
         ctx.instance.runtime_properties['networks'] = {
             "default": machine.info["public_ips"][0]}
-        print machine.info
         ctx.instance.runtime_properties['machine_id'] = machine.info["id"]
 
         ctx.logger.info('External machine attached to ctx')
@@ -111,28 +109,11 @@ def create(**_):
         if len(key):
             key = key[0]
         else:
-            # private = client.generate_key()
-            # client.add_key(
-            #     key_name=ctx.node.properties["key"], private=private)
-            # key = client.keys(search=ctx.node.properties["key"])[0]
-            # ctx.logger.info('Creating key with key name: {0} .'.format(ctx.node.properties["key"]))
 
             raise NonRecoverableError("key not found")
     else:
         raise NonRecoverableError("key not found")
-        # keys = client.keys()
-        # for k in keys:
-        #     if k.is_default:
-        #         ctx.logger.info('Using default key ')
-        #         key = k
-        # if not key:
-        #     ctx.logger.info(
-        #         'No key found. Trying to generate one and add one.')
-        #     private = client.generate_key()
-        #     client.add_key(
-        #         key_name=ctx.node.properties["name"], private=private)
-        #     key = client.keys(search=ctx.node.properties["name"])[0]
-    print 'Key:', key
+    # print 'Key:', key
 
     job_id = backend.create_machine(async=True, name=ctx.node.properties['parameters']["name"],
                                     key=key,
@@ -152,11 +133,11 @@ def create(**_):
             raise NonRecoverableError("Not able to create machine")
         sleep(10)
         job = client.get_job(job_id)
-        print job["summary"]
         timer += 1
         if timer >= 60:   # timeout
             raise NonRecoverableError("Timeout.Not able to create machine.")
 
+    print job["summary"]
     machine = mist_client.machine
     ctx.instance.runtime_properties['machine_id'] = machine.info["id"]
     ctx.instance.runtime_properties['ip'] = machine.info["public_ips"][0]
@@ -241,11 +222,12 @@ def run_script(**kwargs):
         else:
             job_id = client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
                                        machine_id=ctx.instance.runtime_properties['machine_id'])
+    ctx.logger.info("Script with name {0} started".format(name))
     job_id=job_id["job_id"]
     job = client.get_job(job_id)
     while True:
         if job["finished_at"]:
-            print job["finished_at"]
+            # print job["finished_at"]
             break
         if job["error"]:
             raise NonRecoverableError("Not able to run script {0}".format(name))

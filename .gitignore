@@ -1,3 +1,4 @@
 env/
 .*.sw[op]
 *.py[cod]
+plugin/tests/blueprint/blueprint.yaml
