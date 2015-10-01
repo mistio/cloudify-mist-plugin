@@ -61,6 +61,5 @@ class MistConnectionClient(object):
                 if m.info["state"] in ["running","stopped"]:
                     machines[0] = m
                     break
-        ctx.logger.info(machines[0].info)
         ctx.instance.runtime_properties['machine_id']=machines[0].info["id"]
         return machines[0]

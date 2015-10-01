@@ -134,10 +134,10 @@ def create(**_):
         sleep(10)
         job = client.get_job(job_id)
         timer += 1
-        if timer >= 60:   # timeout
+        if timer >= 60:   # timeout 600 sec
             raise NonRecoverableError("Timeout.Not able to create machine.")
 
-    print job["summary"]
+    # print job["summary"]
     machine = mist_client.machine
     ctx.instance.runtime_properties['machine_id'] = machine.info["id"]
     ctx.instance.runtime_properties['ip'] = machine.info["public_ips"][0]
@@ -176,10 +176,11 @@ def run_script(**kwargs):
     machine = connection.MistConnectionClient().machine
     if kwargs.get("script_id", ''):
         script_id = kwargs["script_id"]
-        job_id = client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
-                                   machine_id=ctx.instance.runtime_properties[
-            'machine_id'],
-            params=kwargs.get("params", ""))
+        job_id = client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters'][
+                                   'backend_id'],
+                                    machine_id=ctx.instance.runtime_properties[
+                                    'machine_id'],
+                                    script_params=kwargs.get("params", ""))
     else:
         if kwargs.get("exec_type", ''):
             exec_type = kwargs["exec_type"]
@@ -201,7 +202,6 @@ def run_script(**kwargs):
                     script = scriptfile.read()
             elif script.startswith("#!"):
                 location_type = 'inline'
-        # if not name:
         if not name:
             uid = ''.join(
                 random.choice(string.ascii_uppercase + string.digits) for _ in range(4))
@@ -213,26 +213,19 @@ def run_script(**kwargs):
                                             or use external resource.".format(name))
         response = client.add_script(
             name=name, script=script, location_type=location_type, exec_type=exec_type)
-        # print response
         script_id = response['script_id']
-        if kwargs.get("params", ""):
-            params = kwargs["params"]
-            job_id = client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
-                                       machine_id=ctx.instance.runtime_properties['machine_id'], params=params)
-        else:
-            job_id = client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
-                                       machine_id=ctx.instance.runtime_properties['machine_id'])
+        job_id = client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
+                                   machine_id=ctx.instance.runtime_properties['machine_id'], script_params=kwargs.get("params", ""))
     ctx.logger.info("Script with name {0} started".format(name))
     job_id=job_id["job_id"]
     job = client.get_job(job_id)
     while True:
         if job["finished_at"]:
-            # print job["finished_at"]
             break
         if job["error"]:
             raise NonRecoverableError("Not able to run script {0}".format(name))
         sleep(10)
         job = client.get_job(job_id)
-    # print job
     ctx.logger.info(job["logs"][2]['stdout'])
+    ctx.logger.info(job["logs"][2]['extra_output'])
     ctx.logger.info("Script with name {0} succeeded".format(name))

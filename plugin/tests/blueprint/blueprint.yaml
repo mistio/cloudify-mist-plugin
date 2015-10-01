@@ -50,7 +50,7 @@ inputs:
         default: true
     node_external_resource:
         description: an input for the test
-        default: true  
+        default: true
     monitoring:
         description: an input for the test
         default: false
@@ -59,7 +59,7 @@ inputs:
         default: lamptest
     node_external_resource_id:
         description: an input for the test
-        default: i-ac8c2300
+        default: i-36e2569a
 
 
 node_templates:
