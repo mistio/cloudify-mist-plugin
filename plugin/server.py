@@ -114,14 +114,16 @@ def create(**_):
     else:
         raise NonRecoverableError("key not found")
     # print 'Key:', key
+    if ctx.node.properties['parameters'].get("networks"):
+        networks = ctx.node.properties['parameters']["networks"]
+    else:
+        networks = []    
 
     job_id = backend.create_machine(async=True, name=ctx.node.properties['parameters']["name"],
-                                    key=key,
-                                    image_id=ctx.node.properties[
-                                        'parameters']["image_id"],
-                                    location_id=ctx.node.properties['parameters'][
-        "location_id"],
-        size_id=ctx.node.properties['parameters']["size_id"])
+                                    key=key,image_id=ctx.node.properties['parameters']["image_id"],
+                                    location_id=ctx.node.properties['parameters']["location_id"],
+                                    size_id=ctx.node.properties['parameters']["size_id"],
+                                    networks = [])
     job_id = job_id.json()["job_id"]
     job = client.get_job(job_id)
     timer = 0
