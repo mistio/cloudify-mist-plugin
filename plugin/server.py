@@ -123,7 +123,7 @@ def create(**_):
                                     key=key,image_id=ctx.node.properties['parameters']["image_id"],
                                     location_id=ctx.node.properties['parameters']["location_id"],
                                     size_id=ctx.node.properties['parameters']["size_id"],
-                                    networks = [])
+                                    networks = networks)
     job_id = job_id.json()["job_id"]
     job = client.get_job(job_id)
     timer = 0
