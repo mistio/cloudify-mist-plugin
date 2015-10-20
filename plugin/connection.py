@@ -18,7 +18,12 @@ class MistConnectionClient(object):
         """Represents the MistConnection Client
         """
         if self._client is None:
-            self._client = MistClient(email=ctx.node.properties['mist_config']['username'],
+            if ctx.node.properties['mist_config'].get("mist_uri"):
+                mist_uri = ctx.node.properties['mist_config']["mist_uri"]
+            else:
+                mist_uri = "https://mist.io"   
+            self._client = MistClient(mist_uri= mist_uri,
+                                      email=ctx.node.properties['mist_config']['username'],
                                       password=ctx.node.properties['mist_config']['password'])
         return self._client
 
@@ -27,8 +32,19 @@ class MistConnectionClient(object):
         """Represents the Mist Backend
         """
         if self._backend is None:
-            self._backend = self.client.backends(
-                id=ctx.node.properties['parameters']['backend_id'])[0]
+            if ctx.node.properties['parameters'].get("backend_id"):
+                self._backend = self.client.backends(
+                    id=ctx.node.properties['parameters']['backend_id'])[0]
+            elif ctx.node.properties['parameters'].get("backend_name"):
+                backend_search = self.client.backends(search=ctx.node.properties['parameters'][
+                                                       'backend_name'])
+                if len(backend_search) > 1:
+                    raise NonRecoverableError("Found more then one backend with name {0}".format(
+                                                ctx.node.properties['parameters']['backend_name']))
+                elif len(backend_search) == 0:
+                    raise NonRecoverableError("Did not find backend with name {0}".format(
+                                                ctx.node.properties['parameters']['backend_name']))
+                self._backend = backend_search[0]
         return self._backend
 
     @property
@@ -36,7 +52,6 @@ class MistConnectionClient(object):
         """Represents a Mist Machine
         """
         self.backend.update_machines()
-
         if ctx.node.properties.get('use_external_resource',''):
             ctx.logger.info('use external resource enabled')
             if not ctx.node.properties["resource_id"]:
@@ -48,7 +63,7 @@ class MistConnectionClient(object):
                     "External resource not found")
             if machines[0].info["state"] in ["error","terminated"]:
                 raise NonRecoverableError(
-                    "External resource state {0}".format(machines[0].info["state"]))    
+                    "External resource state {0}".format(machines[0].info["state"]))
             return machines[0]
 
             

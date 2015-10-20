@@ -117,8 +117,8 @@ def create(**_):
     if ctx.node.properties['parameters'].get("networks"):
         networks = ctx.node.properties['parameters']["networks"]
     else:
-        networks = []    
-
+        networks = []
+    ctx.logger.info('Networks are: {0}'.format(networks))
     job_id = backend.create_machine(async=True, name=ctx.node.properties['parameters']["name"],
                                     key=key,image_id=ctx.node.properties['parameters']["image_id"],
                                     location_id=ctx.node.properties['parameters']["location_id"],
@@ -131,12 +131,12 @@ def create(**_):
         if job["summary"]["probe"]["success"]:
             break
         if job["summary"]["create"]["error"] or job["summary"]["probe"]["error"]:
-            ctx.logger.error('Error on machine creation ')
+            ctx.logger.error('Error on machine creation:{0}'.format(job))
             raise NonRecoverableError("Not able to create machine")
         sleep(10)
         job = client.get_job(job_id)
         timer += 1
-        if timer >= 60:   # timeout 600 sec
+        if timer >= 210:   # timeout 35 min
             raise NonRecoverableError("Timeout.Not able to create machine.")
 
     # print job["summary"]
