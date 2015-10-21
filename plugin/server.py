@@ -150,8 +150,12 @@ def create(**_):
 
 @operation
 def start(**_):
-    connection.MistConnectionClient().machine.start()
-    ctx.logger.info('Machine started')
+    try:
+        connection.MistConnectionClient().machine.start()
+        ctx.logger.info('Machine started')
+    except:
+        ctx.logger.info("Failed to start machine")
+        print connection.MistConnectionClient().machine.info
     if ctx.node.properties.get("monitoring"):
         connection.MistConnectionClient().machine.enable_monitoring()
         ctx.logger.info('Monitoring enabled')
