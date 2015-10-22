@@ -136,7 +136,7 @@ def create(**_):
         sleep(10)
         job = client.get_job(job_id)
         timer += 1
-        if timer >= 210:   # timeout 35 min
+        if timer >= 360:   # timeout 1hour
             raise NonRecoverableError("Timeout.Not able to create machine.")
 
     # print job["summary"]
