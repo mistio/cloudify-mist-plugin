@@ -16,7 +16,7 @@ setup(
     ],
     dependency_links=[
         'https://github.com/mistio/mist.client/archive/master.zip',
-    ]
+    ],
     test_requires=[
         'cloudify-dsl-parser>=3.3a5',
         'nose',
