@@ -10,7 +10,7 @@ class MistConnectionClient(object):
 
     def __init__(self):
         self._client = None
-        self._backend = None
+        self._cloud = None
         self._machine = None
 
     @property
@@ -28,36 +28,36 @@ class MistConnectionClient(object):
         return self._client
 
     @property
-    def backend(self):
-        """Represents the Mist Backend
+    def cloud(self):
+        """Represents the Mist Cloud
         """
-        if self._backend is None:
-            if ctx.node.properties['parameters'].get("backend_id"):
-                self._backend = self.client.backends(
-                    id=ctx.node.properties['parameters']['backend_id'])[0]
-            elif ctx.node.properties['parameters'].get("backend_name"):
-                backend_search = self.client.backends(search=ctx.node.properties['parameters'][
-                                                       'backend_name'])
-                if len(backend_search) > 1:
-                    raise NonRecoverableError("Found more then one backend with name {0}".format(
-                                                ctx.node.properties['parameters']['backend_name']))
-                elif len(backend_search) == 0:
-                    raise NonRecoverableError("Did not find backend with name {0}".format(
-                                                ctx.node.properties['parameters']['backend_name']))
-                self._backend = backend_search[0]
-        return self._backend
+        if self._cloud is None:
+            if ctx.node.properties['parameters'].get("cloud_id"):
+                self._cloud = self.client.clouds(
+                    id=ctx.node.properties['parameters']['cloud_id'])[0]
+            elif ctx.node.properties['parameters'].get("cloud_name"):
+                cloud_search = self.client.clouds(search=ctx.node.properties['parameters'][
+                                                       'cloud_name'])
+                if len(cloud_search) > 1:
+                    raise NonRecoverableError("Found more then one cloud with name {0}".format(
+                                                ctx.node.properties['parameters']['cloud_name']))
+                elif len(cloud_search) == 0:
+                    raise NonRecoverableError("Did not find cloud with name {0}".format(
+                                                ctx.node.properties['parameters']['cloud_name']))
+                self._cloud = cloud_search[0]
+        return self._cloud
 
     @property
     def machine(self):
         """Represents a Mist Machine
         """
-        self.backend.update_machines()
+        self.cloud.update_machines()
         if ctx.node.properties.get('use_external_resource',''):
             ctx.logger.info('use external resource enabled')
             if not ctx.node.properties["resource_id"]:
                 raise NonRecoverableError(
                     "Cannot use external resource without defining resource_id")
-            machines = self.backend.machines(id=ctx.node.properties["resource_id"])
+            machines = self.cloud.machines(id=ctx.node.properties["resource_id"])
             if not len(machines):
                 raise NonRecoverableError(
                     "External resource not found")
@@ -68,8 +68,8 @@ class MistConnectionClient(object):
 
             
         if ctx.instance.runtime_properties.get('machine_id'):
-            return self.backend.machines(id=ctx.instance.runtime_properties['machine_id'])[0]
-        machines = self.backend.machines(search=ctx.node.properties['parameters']["name"])
+            return self.cloud.machines(id=ctx.instance.runtime_properties['machine_id'])[0]
+        machines = self.cloud.machines(search=ctx.node.properties['parameters']["name"])
         if len(machines) > 1:
             ctx.logger.info('Found multiple machines with the same name')
             for m in machines:

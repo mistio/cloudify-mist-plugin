@@ -25,12 +25,12 @@ def creation_validation(**_):
         if property_key not in ctx.node.properties:
             raise NonRecoverableError(
                 '{0} is a required input. Unable to create.'.format(key))
-    backend = client.backends(id=ctx.node.properties['backend_id'])
-    if not len(backend):
+    cloud = client.clouds(id=ctx.node.properties['cloud_id'])
+    if not len(cloud):
         raise NonRecoverableError(
-            '{0} backend was not found.'.format(ctx.node.properties['backend_id']))
+            '{0} cloud was not found.'.format(ctx.node.properties['cloud_id']))
     image = ""
-    for im in backend[0].images:
+    for im in cloud[0].images:
         if im[id] == ctx.node.properties['image_id']:
             image = im
             break
@@ -38,7 +38,7 @@ def creation_validation(**_):
         raise NonRecoverableError(
             'image_id {0} not found.'.format(ctx.node.properties['image_id']))
     size = ""
-    for si in backend[0].sizes:
+    for si in cloud[0].sizes:
         if si[id] == ctx.node.properties['size_id']:
             size = si
             break
@@ -46,7 +46,7 @@ def creation_validation(**_):
         raise NonRecoverableError(
             'size_id {0} not found.'.format(ctx.node.properties['size_id']))
     location = ""
-    for lo in backend[0].locations:
+    for lo in cloud[0].locations:
         if lo[id] == ctx.node.properties['location_id']:
             location = lo
             break
@@ -54,7 +54,7 @@ def creation_validation(**_):
         raise NonRecoverableError(
             'location_id {0} not found.'.format(ctx.node.properties['location_id']))
 
-    machines = backend[0].machines(search=ctx.node.properties["name"])
+    machines = cloud[0].machines(search=ctx.node.properties["name"])
     if ctx.node.properties['use_external_resource'] and not len(machines):
         raise NonRecoverableError(
             'machine {0} not found.'.format(ctx.node.properties["name"]))
@@ -69,8 +69,8 @@ def creation_validation(**_):
             delay = 0
             while True:
                 sleep(10)
-                backend[0].update_machines()
-                if backend[0].machines(search=ctx.node.properties["name"])[0].info["state"] == "running":
+                cloud[0].update_machines()
+                if cloud[0].machines(search=ctx.node.properties["name"])[0].info["state"] == "running":
                     break
                 elif delay == 5:
                     raise NonRecoverableError(
@@ -85,7 +85,7 @@ def creation_validation(**_):
 def create(**_):
     mist_client = connection.MistConnectionClient()
     client = mist_client.client
-    backend = mist_client.backend
+    cloud = mist_client.cloud
     if ctx.node.properties['use_external_resource']:
         machine = mist_client.machine
         ctx.instance.runtime_properties['ip'] = machine.info["public_ips"][0]
@@ -95,7 +95,7 @@ def create(**_):
 
         ctx.logger.info('External machine attached to ctx')
         return
-    machines = backend.machines(
+    machines = cloud.machines(
         search=ctx.node.properties['parameters']["name"])
     if len(machines):
         for m in machines:
@@ -119,7 +119,7 @@ def create(**_):
     else:
         networks = []
     ctx.logger.info('Networks are: {0}'.format(networks))
-    job_id = backend.create_machine(async=True, name=ctx.node.properties['parameters']["name"],
+    job_id = cloud.create_machine(async=True, name=ctx.node.properties['parameters']["name"],
                                     key=key,image_id=ctx.node.properties['parameters']["image_id"],
                                     location_id=ctx.node.properties['parameters']["location_id"],
                                     size_id=ctx.node.properties['parameters']["size_id"],
@@ -182,8 +182,8 @@ def run_script(**kwargs):
     machine = connection.MistConnectionClient().machine
     if kwargs.get("script_id", ''):
         script_id = kwargs["script_id"]
-        job_id = client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters'][
-                                   'backend_id'],
+        job_id = client.run_script(script_id=script_id, cloud_id=ctx.node.properties['parameters'][
+                                   'cloud_id'],
                                     machine_id=ctx.instance.runtime_properties[
                                     'machine_id'],
                                     script_params=kwargs.get("params", ""))
@@ -200,6 +200,14 @@ def run_script(**kwargs):
                 location_type = 'github'
             elif (script.startswith('http://') or script.startswith('https://')):
                 location_type = 'url'
+            elif kwargs.get("tmp_prefix"):
+                script = kwargs["tmp_prefix"] + script
+                if os.path.exists():
+                    if not name:
+                        name = script.split("/").pop()
+                    location_type = 'inline'
+                    with open(script, "r") as scriptfile:
+                        script = scriptfile.read()
             elif os.path.exists(script):
                 if not name:
                     name = script.split("/").pop()
@@ -208,6 +216,8 @@ def run_script(**kwargs):
                     script = scriptfile.read()
             elif script.startswith("#!"):
                 location_type = 'inline'
+            else:
+                raise NonRecoverableError("Script not found {0}".format(script))
         if not name:
             uid = ''.join(
                 random.choice(string.ascii_uppercase + string.digits) for _ in range(4))
@@ -220,7 +230,7 @@ def run_script(**kwargs):
         response = client.add_script(
             name=name, script=script, location_type=location_type, exec_type=exec_type)
         script_id = response['script_id']
-        job_id = client.run_script(script_id=script_id, backend_id=ctx.node.properties['parameters']['backend_id'],
+        job_id = client.run_script(script_id=script_id, cloud_id=ctx.node.properties['parameters']['cloud_id'],
                                    machine_id=ctx.instance.runtime_properties['machine_id'], script_params=kwargs.get("params", ""))
     ctx.logger.info("Script with name {0} started".format(name))
     job_id=job_id["job_id"]

@@ -58,7 +58,7 @@ def create(**kwargs):
     kp=mist_client.keys(search=key_pair_name)
     if len(kp):
         kp = kp[0]
-    else:    
+    else:
         private = mist_client.generate_key()
         mist_client.add_key(key_name=key_pair_name, private=private)
         mist_client.update_keys()
@@ -244,7 +244,7 @@ def get_resource_id():
     elif 'private_key_path' in ctx.node.properties:
         directory_path, filename = \
             os.path.split(ctx.node.properties['private_key_path'])
-        resource_id, filetype = filename.split('.')
+        resource_id = filename.split('.')[0]
         return resource_id
 
 
@@ -296,13 +296,12 @@ def use_external_resource(properties):
         raise NonRecoverableError(
             'External resource, but resource not set.')
     ctx.logger.debug(
-        'Resource Id: {0}'.format(properties["resource_id"]))    
+        'Resource Id: {0}'.format(properties["resource_id"]))
     return True
-        
+
 
 
 def set_external_resource_id(value):
     """Sets the EXTERNAL_RESOURCE_ID runtime_property for a Node-Instance.
     """
     ctx.instance.runtime_properties["mist_resource_id"] = value
-       
