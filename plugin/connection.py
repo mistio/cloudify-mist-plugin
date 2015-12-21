@@ -23,7 +23,7 @@ class MistConnectionClient(object):
             else:
                 mist_uri = "https://mist.io"
             if ctx.node.properties['mist_config'].get("api_token"):
-                token = ctx.node.properties['mist_config']['api_token'])
+                token = ctx.node.properties['mist_config']['api_token']
                 self._client = MistClient(mist_uri= mist_uri,
                                           api_token= token)
             else:
