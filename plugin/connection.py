@@ -21,10 +21,15 @@ class MistConnectionClient(object):
             if ctx.node.properties['mist_config'].get("mist_uri"):
                 mist_uri = ctx.node.properties['mist_config']["mist_uri"]
             else:
-                mist_uri = "https://mist.io"   
-            self._client = MistClient(mist_uri= mist_uri,
-                                      email=ctx.node.properties['mist_config']['username'],
-                                      password=ctx.node.properties['mist_config']['password'])
+                mist_uri = "https://mist.io"
+            if ctx.node.properties['mist_config'].get("api_token"):
+                token = ctx.node.properties['mist_config']['api_token'])
+                self._client = MistClient(mist_uri= mist_uri,
+                                          api_token= token)
+            else:
+                self._client = MistClient(mist_uri= mist_uri,
+                                          email=ctx.node.properties['mist_config']['username'],
+                                          password=ctx.node.properties['mist_config']['password'])
         return self._client
 
     @property
@@ -66,7 +71,7 @@ class MistConnectionClient(object):
                     "External resource state {0}".format(machines[0].info["state"]))
             return machines[0]
 
-            
+
         if ctx.instance.runtime_properties.get('machine_id'):
             return self.cloud.machines(id=ctx.instance.runtime_properties['machine_id'])[0]
         machines = self.cloud.machines(search=ctx.node.properties['parameters']["name"])
