@@ -200,8 +200,7 @@ def run_script(**kwargs):
         if kwargs.get("location_type", ""):
             location_type = kwargs["location_type"]
         else:
-            if script.startswith('http://github.com') or
-                   script.startswith('https://github.com'):
+            if script.startswith('http://github.com') or script.startswith('https://github.com'):
                 location_type = 'github'
             elif (script.startswith('http://') or script.startswith('https://')):
                 location_type = 'url'

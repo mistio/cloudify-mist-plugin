@@ -163,39 +163,6 @@ def start(**_):
         ctx.logger.info('Monitoring enabled')
 
 
-@operation
-def install_master(**kwargs):
-    client = connection.MistConnectionClient().client
-    machine = connection.MistConnectionClient().machine
-    ctx.instance.runtime_properties['master_ip'] = ctx.instance.runtime_properties['ip']
-    ctx.instance.properties['master_ip'] = ctx.instance.runtime_properties['ip']
-    env = kwargs.get(env)
-    if not instance(env, dict):
-        env = {}
-    env.update({"MASTER_IP": })
-    run_script({"script": "scripts/install_docker.sh"})
-    run_script({
-        "script": "https://github.com/kubernetes/kubernetes",
-        "entry_point": "docs/getting-started-guides/docker-multinode/master.sh",
-        "su": True,
-        "env": env
-    })
-
-
-@operation
-def install_worker(**kwargs):
-    client = connection.MistConnectionClient().client
-    machine = connection.MistConnectionClient().machine
-    env = kwargs.get(env, {})
-    env.update({"MASTER_IP":ctx.instance.runtime_properties.get('master_ip']) or
-        ctx.instance.properties['master_ip'] })
-    run_script({"script": "scripts/install_docker.sh"})
-    run_script({
-        "script": "https://github.com/kubernetes/kubernetes",
-        "entry_point": "docs/getting-started-guides/docker-multinode/worker.sh",
-        "su": True,
-        "env": env
-    })
 
 
 @operation
@@ -270,14 +237,14 @@ def run_script(**kwargs):
         response = client.add_script(
             name=name, script=script, location_type=location_type,
             exec_type=exec_type
-            )
+        )
         script_id = response['script_id']
         machine_id = ctx.instance.runtime_properties['machine_id']
         cloud_id = ctx.node.properties['parameters']['cloud_id']
         job_id = client.run_script(script_id=script_id, cloud_id=cloud_id,
                                    machine_id=machine_id,
                                    script_params=kwargs.get("params", ""),
-                                   su=kwargs.get("su"), env=kwargs.get("env")
+                                   su=kwargs.get("su"), env=kwargs.get("env"))
     ctx.logger.info("Script with name {0} started".format(name))
     job_id=job_id["job_id"]
     job = client.get_job(job_id)
@@ -291,3 +258,41 @@ def run_script(**kwargs):
     ctx.logger.info(job["logs"][2]['stdout'])
     ctx.logger.info(job["logs"][2]['extra_output'])
     ctx.logger.info("Script with name {0} succeeded".format(name))
+
+
+@operation
+def install_master(**kwargs):
+    client = connection.MistConnectionClient().client
+    machine = connection.MistConnectionClient().machine
+    if len(machine.info["private_ips"]):
+        ctx.instance.runtime_properties['master_ip'] = machine.info["private_ips"][0]
+    else:
+        ctx.instance.runtime_properties['master_ip'] = machine.info["public_ips"][0]
+    env = kwargs.get("env")
+    if not isinstance(env, dict):
+        env = {}
+    env.update({"MASTER_IP": ctx.instance.runtime_properties['master_ip']})
+    operation(run_script({"script": "scripts/install_docker.sh"}))
+    operation(run_script({
+        "script": "https://github.com/kubernetes/kubernetes",
+        "entry_point": "docs/getting-started-guides/docker-multinode/master.sh",
+        "su": True,
+        "env": env
+    }))
+
+
+@operation
+def install_worker(**kwargs):
+    client = connection.MistConnectionClient().client
+    machine = connection.MistConnectionClient().machine
+    env = kwargs.get("env")
+    if not isinstance(env, dict):
+        env = {}
+    env.update({"MASTER_IP": ctx.instance.runtime_properties['master_ip']})
+    run_script({"script": "scripts/install_docker.sh"})
+    run_script({
+        "script": "https://github.com/kubernetes/kubernetes",
+        "entry_point": "docs/getting-started-guides/docker-multinode/worker.sh",
+        "su": True,
+        "env": env
+    })

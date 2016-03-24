@@ -144,8 +144,12 @@ node_types:
               type: integer
               default: 30
         configure:
-          implementation: mist.plugin.kubernetes.install_master
+          implementation: mist.plugin.kubernetes.run_script
           inputs:
+            script: "https://github.com/kubernetes/kubernetes",
+            entry_point: "docs/getting-started-guides/docker-multinode/master.sh",
+            su: true,
+            env: { "MASTER_IP": { get_property: [SELF, ip]}}
             start_retry_interval:
               description: Polling interval until the server is active in seconds
               type: integer
@@ -160,6 +164,11 @@ node_types:
           inputs:
             mist_config:
               default: {}
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: mist.plugin.kubernetes.run_script
+          inputs:
+            script: "scripts/install_docker.sh"
       cloudify.interfaces.validation:
         creation:
           implementation: mist.plugin.server.creation_validation
