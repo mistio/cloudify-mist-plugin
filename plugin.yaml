@@ -146,6 +146,12 @@ node_types:
               description: Polling interval until the server is active in seconds
               type: integer
               default: 30
+        preconfigure:
+          implementation: mist.plugin.kubernetes.run_script
+          inputs:
+            script:
+              type: string
+              default: "scripts/install_docker.sh"
         configure:
           implementation: mist.plugin.kubernetes.run_script
           inputs:
@@ -174,13 +180,6 @@ node_types:
           inputs:
             mist_config:
               default: {}
-      cloudify.interfaces.relationship_lifecycle:
-        preconfigure:
-          implementation: mist.plugin.kubernetes.run_script
-          inputs:
-            script:
-              type: string
-              default: "scripts/install_docker.sh"
       cloudify.interfaces.validation:
         creation:
           implementation: mist.plugin.server.creation_validation

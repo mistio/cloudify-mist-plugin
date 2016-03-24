@@ -247,13 +247,13 @@ def run_script(**kwargs):
                                    script_params=kwargs.get("params", ""),
                                    su=kwargs.get("su"), env=kwargs.get("env"))
     ctx.logger.info("Script with name {0} started".format(name))
-    job_id=job_id["job_id"]
+    job_id = job_id["job_id"]
     job = client.get_job(job_id)
     while True:
-        if job["finished_at"]:
-            break
         if job["error"]:
             raise NonRecoverableError("Not able to run script {0}".format(name))
+        if job["finished_at"]:
+            break
         sleep(10)
         job = client.get_job(job_id)
     ctx.logger.info(job["logs"][2]['stdout'])
