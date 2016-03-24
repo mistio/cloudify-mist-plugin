@@ -266,10 +266,7 @@ node_types:
               description: Polling interval until the server is active in seconds
               type: integer
               default: 30
-
-      cloudify.interfaces.relationship_lifecycle:
-        preconfigure:
-              cloudify.interfaces.validation:
+      cloudify.interfaces.validation:
         creation:
           implementation: mist.plugin.server.creation_validation
           inputs:
