@@ -29,7 +29,7 @@ node_types:
         default: ''
       parameters:
         description: >
-          The key value pair parameters required by Mist Client to use 
+          The key value pair parameters required by Mist Client to use
           the mist.client.backend.create_machine command.(backend_id,image_id
           size_id, location_id, name, monitoring, ssh_user, networks)
         default: {}
@@ -61,7 +61,7 @@ node_types:
         default: ''
       parameters:
         description: >
-          The key value pair parameters required by Mist Client to use 
+          The key value pair parameters required by Mist Client to use
           the mist.client.backend.create_machine command.(backend_id,image_id
           size_id, location_id, name, monitoring, ssh_user, networks )
         default: {}
@@ -101,7 +101,139 @@ node_types:
           inputs:
             args:
               default: {}
- 
+
+
+  cloudify.mist.nodes.KubernetesMaster:
+    derived_from: cloudify.nodes.Compute
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          Either the name or ID of the resource in Cloudify. If this is an existing
+          resource, you should provide the name or the ID of the resource in Mist.io.
+        type: string
+        default: ''
+      parameters:
+        description: >
+          The key value pair parameters required by Mist Client to use
+          the mist.client.backend.create_machine command.(backend_id,image_id
+          size_id, location_id, name, monitoring, ssh_user, networks )
+        default: {}
+      mist_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Mist API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: mist.plugin.server.create
+          inputs:
+            use_external_resource:
+              default: false
+            mist_config:
+              default: {}
+        start:
+          implementation: mist.plugin.server.start
+          inputs:
+            start_retry_interval:
+              description: Polling interval until the server is active in seconds
+              type: integer
+              default: 30
+        configure:
+          implementation: mist.plugin.kubernetes.install_master
+          inputs:
+            start_retry_interval:
+              description: Polling interval until the server is active in seconds
+              type: integer
+              default: 30
+        stop:
+          implementation: mist.plugin.server.stop
+          inputs:
+            mist_config:
+              default: {}
+        delete:
+          implementation: mist.plugin.server.delete
+          inputs:
+            mist_config:
+              default: {}
+      cloudify.interfaces.validation:
+        creation:
+          implementation: mist.plugin.server.creation_validation
+          inputs:
+            args:
+              default: {}
+
+
+
+  cloudify.mist.nodes.KubernetesWorker:
+    derived_from: cloudify.nodes.Compute
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          Either the name or ID of the resource in Cloudify. If this is an existing
+          resource, you should provide the name or the ID of the resource in Mist.io.
+        type: string
+        default: ''
+      parameters:
+        description: >
+          The key value pair parameters required by Mist Client to use
+          the mist.client.backend.create_machine command.(backend_id,image_id
+          size_id, location_id, name, monitoring, ssh_user, networks )
+        default: {}
+      mist_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Mist API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: mist.plugin.server.create
+          inputs:
+            use_external_resource:
+              default: false
+            mist_config:
+              default: {}
+        start:
+          implementation: mist.plugin.server.start
+          inputs:
+            start_retry_interval:
+              description: Polling interval until the server is active in seconds
+              type: integer
+              default: 30
+        configure:
+          implementation: mist.plugin.kubernetes.install_worker
+          inputs:
+            start_retry_interval:
+              description: Polling interval until the server is active in seconds
+              type: integer
+              default: 30
+        stop:
+          implementation: mist.plugin.server.stop
+          inputs:
+            mist_config:
+              default: {}
+        delete:
+          implementation: mist.plugin.server.delete
+          inputs:
+            mist_config:
+              default: {}
+      cloudify.interfaces.validation:
+        creation:
+          implementation: mist.plugin.server.creation_validation
+          inputs:
+            args:
+              default: {}
+
+
 relationships:
   cloudify.mist.relationships.server_connected_to_keypair:
     derived_from: cloudify.relationships.connected_to

@@ -120,10 +120,13 @@ def create(**_):
         networks = []
     ctx.logger.info('Networks are: {0}'.format(networks))
     job_id = cloud.create_machine(async=True, name=ctx.node.properties['parameters']["name"],
-                                    key=key,image_id=ctx.node.properties['parameters']["image_id"],
-                                    location_id=ctx.node.properties['parameters']["location_id"],
-                                    size_id=ctx.node.properties['parameters']["size_id"],
-                                    networks = networks)
+                                  key=key, image_id=ctx.node.properties[
+                                      'parameters']["image_id"],
+                                  location_id=ctx.node.properties[
+                                      'parameters']["location_id"],
+                                  size_id=ctx.node.properties[
+                                      'parameters']["size_id"],
+                                  networks=networks)
     job_id = job_id.json()["job_id"]
     job = client.get_job(job_id)
     timer = 0
@@ -182,11 +185,12 @@ def run_script(**kwargs):
     machine = connection.MistConnectionClient().machine
     if kwargs.get("script_id", ''):
         script_id = kwargs["script_id"]
-        job_id = client.run_script(script_id=script_id, cloud_id=ctx.node.properties['parameters'][
-                                   'cloud_id'],
-                                    machine_id=ctx.instance.runtime_properties[
-                                    'machine_id'],
-                                    script_params=kwargs.get("params", ""))
+        job_id = client.run_script(script_id=script_id,
+                                   cloud_id=ctx.node.properties['parameters'][
+                                       'cloud_id'],
+                                   machine_id=ctx.instance.runtime_properties[
+                                       'machine_id'],
+                                   script_params=kwargs.get("params", ""))
     else:
         if kwargs.get("exec_type", ''):
             exec_type = kwargs["exec_type"]
@@ -196,7 +200,8 @@ def run_script(**kwargs):
         if kwargs.get("location_type", ""):
             location_type = kwargs["location_type"]
         else:
-            if (script.startswith('http://github.com') or script.startswith('https://github.com')):
+            if script.startswith('http://github.com') or
+                   script.startswith('https://github.com'):
                 location_type = 'github'
             elif (script.startswith('http://') or script.startswith('https://')):
                 location_type = 'url'
@@ -217,7 +222,8 @@ def run_script(**kwargs):
             elif script.startswith("#!"):
                 location_type = 'inline'
             else:
-                raise NonRecoverableError("Script not found {0}".format(script))
+                raise NonRecoverableError(
+                    "Script not found {0}".format(script))
         if not name:
             uid = ''.join(
                 random.choice(string.ascii_uppercase + string.digits) for _ in range(4))
@@ -233,13 +239,14 @@ def run_script(**kwargs):
         job_id = client.run_script(script_id=script_id, cloud_id=ctx.node.properties['parameters']['cloud_id'],
                                    machine_id=ctx.instance.runtime_properties['machine_id'], script_params=kwargs.get("params", ""))
     ctx.logger.info("Script with name {0} started".format(name))
-    job_id=job_id["job_id"]
+    job_id = job_id["job_id"]
     job = client.get_job(job_id)
     while True:
         if job["finished_at"]:
             break
         if job["error"]:
-            raise NonRecoverableError("Not able to run script {0}".format(name))
+            raise NonRecoverableError(
+                "Not able to run script {0}".format(name))
         sleep(10)
         job = client.get_job(job_id)
     ctx.logger.info(job["logs"][2]['stdout'])
