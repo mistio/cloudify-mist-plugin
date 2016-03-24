@@ -264,7 +264,7 @@ def run_script(**kwargs):
 def install_master(**kwargs):
     client = connection.MistConnectionClient().client
     machine = connection.MistConnectionClient().machine
-    if len(machine.info["private_ips"]):
+    if len(machine.info["private_ips"]) and not ctx.node.properties["multicloud"]:
         ctx.instance.runtime_properties['master_ip'] = machine.info["private_ips"][0]
     else:
         ctx.instance.runtime_properties['master_ip'] = machine.info["public_ips"][0]

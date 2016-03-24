@@ -111,6 +111,9 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
+      multicloud:
+        type: boolean
+        default: false
       resource_id:
         description: >
           Either the name or ID of the resource in Cloudify. If this is an existing
@@ -147,8 +150,10 @@ node_types:
           implementation: mist.plugin.kubernetes.run_script
           inputs:
             script:
+              type: string
               default: "https://github.com/kubernetes/kubernetes"
             entry_point:
+              type: string
               default: "docs/getting-started-guides/docker-multinode/master.sh"
             su:
               type: boolean
