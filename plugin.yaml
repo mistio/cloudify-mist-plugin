@@ -148,7 +148,9 @@ node_types:
           inputs:
             script: "https://github.com/kubernetes/kubernetes"
             entry_point: "docs/getting-started-guides/docker-multinode/master.sh"
-            su: true
+            su:
+              type: boolean
+              default: true
             env: { "MASTER_IP": { get_property: [SELF, ip]}}
             start_retry_interval:
               description: Polling interval until the server is active in seconds
