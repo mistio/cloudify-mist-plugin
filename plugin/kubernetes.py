@@ -195,6 +195,7 @@ def run_script(**kwargs):
                                    su=kwargs.get("su"), env=kwargs.get("env")
                                    )
     else:
+        entrypoint = kwargs.get("entry_point")
         if kwargs.get("exec_type", ''):
             exec_type = kwargs["exec_type"]
         else:
@@ -236,7 +237,7 @@ def run_script(**kwargs):
                                             or use external resource.".format(name))
         response = client.add_script(
             name=name, script=script, location_type=location_type,
-            exec_type=exec_type
+            exec_type=exec_type, entrypoint=entrypoint
         )
         script_id = response['script_id']
         machine_id = ctx.instance.runtime_properties['machine_id']
