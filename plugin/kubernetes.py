@@ -195,7 +195,7 @@ def run_script(**kwargs):
                                    su=kwargs.get("su"), env=kwargs.get("env")
                                    )
     else:
-        entrypoint = kwargs.get("entry_point")
+        entrypoint = kwargs.get("entrypoint")
         if kwargs.get("exec_type", ''):
             exec_type = kwargs["exec_type"]
         else:
