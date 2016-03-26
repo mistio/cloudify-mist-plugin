@@ -157,13 +157,13 @@ node_types:
             mist_config:
               default: {}
       kuberneteslifecycle:
-        configure:
+        create:
           implementation: mist.plugin.kubernetes.run_script
           inputs:
             script:
               type: string
               default: "scripts/install_docker.sh"
-        deploy:
+        configure:
           implementation: mist.plugin.kubernetes.run_script
           inputs:
             script:
