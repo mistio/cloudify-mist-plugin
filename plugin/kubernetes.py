@@ -163,6 +163,66 @@ def start(**_):
         ctx.logger.info('Monitoring enabled')
 
 
+@operation
+def install_kubernetes(master=False):
+    client = connection.MistConnectionClient().client
+    machine = connection.MistConnectionClient().machine
+    if master:
+        kub_type = "master"
+    else:
+        kub_type = "worker"
+    with open("scripts/install_docker.sh", "r") as scriptfile:
+        script = scriptfile.read()
+    response = client.add_script(
+        name="install_docker", script=script,
+        location_type="inline", exec_type="executable",
+    )
+    script_id = response['script_id']
+    machine_id = ctx.instance.runtime_properties['machine_id']
+    cloud_id = ctx.node.properties['parameters']['cloud_id']
+    job_id = client.run_script(script_id=script_id, cloud_id=cloud_id,
+                               machine_id=machine_id,
+                               script_params="",
+                               su=True)
+    ctx.logger.info("Docker installation started")
+    job_id = job_id["job_id"]
+    job = client.get_job(job_id)
+    while True:
+        if job["error"]:
+            raise NonRecoverableError("Not able to install docker")
+        if job["finished_at"]:
+            break
+        sleep(10)
+        job = client.get_job(job_id)
+    ctx.logger.info(job["logs"][2]['stdout'])
+    ctx.logger.info(job["logs"][2]['extra_output'])
+    ctx.logger.info("Docker installation script succeeded")
+    response = client.add_script(
+        name="install_kubernetes_" + kub_type, script="https://github.com/kubernetes/kubernetes",
+        location_type="github", exec_type="executable",
+        entrypoint="docs/getting-started-guides/docker-multinode/{0}.sh".format(kub_type),
+    )
+    script_id = response['script_id']
+    machine_id = ctx.instance.runtime_properties['machine_id']
+    cloud_id = ctx.node.properties['parameters']['cloud_id']
+    job_id = client.run_script(script_id=script_id, cloud_id=cloud_id,
+                               machine_id=machine_id,
+                               script_params="",
+                               su=True,
+                               env={"MASTER_IP": ctx.instance.runtime_properties['ip']})
+    ctx.logger.info("Kubernetes {0} installation started".format(kub_type))
+    job_id = job_id["job_id"]
+    job = client.get_job(job_id)
+    while True:
+        if job["error"]:
+            raise NonRecoverableError("Not able to install kubernetes {0}".format(kub_type))
+        if job["finished_at"]:
+            break
+        sleep(10)
+        job = client.get_job(job_id)
+    ctx.logger.info(job["logs"][2]['stdout'])
+    ctx.logger.info(job["logs"][2]['extra_output'])
+    ctx.logger.info("Kubernetes {0} installation script succeeded".format(kub_type))
 
 
 @operation

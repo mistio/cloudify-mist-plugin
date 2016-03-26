@@ -146,6 +146,16 @@ node_types:
               description: Polling interval until the server is active in seconds
               type: integer
               default: 30
+        configure:
+          implementation: mist.plugin.kubernetes.install_kubernetes
+          inputs:
+            master:
+              type: boolean
+              default: true
+            start_retry_interval:
+              description: Polling interval until the server is active in seconds
+              type: integer
+              default: 30
         stop:
           implementation: mist.plugin.server.stop
           inputs:
@@ -156,31 +166,6 @@ node_types:
           inputs:
             mist_config:
               default: {}
-      kuberneteslifecycle:
-        create:
-          implementation: mist.plugin.kubernetes.run_script
-          inputs:
-            script:
-              type: string
-              default: "scripts/install_docker.sh"
-        configure:
-          implementation: mist.plugin.kubernetes.run_script
-          inputs:
-            script:
-              type: string
-              default: "https://github.com/kubernetes/kubernetes"
-            entrypoint:
-              type: string
-              default: "docs/getting-started-guides/docker-multinode/master.sh"
-            su:
-              type: boolean
-              default: true
-            env:
-              default: { "MASTER_IP": { get_attribute: [SELF, ip]}}
-            start_retry_interval:
-              description: Polling interval until the server is active in seconds
-              type: integer
-              default: 30
       cloudify.interfaces.validation:
         creation:
           implementation: mist.plugin.server.creation_validation
@@ -230,6 +215,16 @@ node_types:
               description: Polling interval until the server is active in seconds
               type: integer
               default: 30
+        configure:
+          implementation: mist.plugin.kubernetes.install_kubernetes
+          inputs:
+            master:
+              type: boolean
+              default: false
+            start_retry_interval:
+              description: Polling interval until the server is active in seconds
+              type: integer
+              default: 30
         stop:
           implementation: mist.plugin.server.stop
           inputs:
@@ -240,32 +235,6 @@ node_types:
           inputs:
             mist_config:
               default: {}
-
-      kuberneteslifecycle:
-        configure:
-          implementation: mist.plugin.kubernetes.run_script
-          inputs:
-            script:
-              type: string
-              default: "scripts/install_docker.sh"
-        deploy:
-          implementation: mist.plugin.kubernetes.run_script
-          inputs:
-            script:
-              type: string
-              default: "https://github.com/kubernetes/kubernetes"
-            entrypoint:
-              type: string
-              default: "docs/getting-started-guides/docker-multinode/worker.sh"
-            su:
-              type: boolean
-              default: true
-            env:
-              default: { "MASTER_IP": { get_attribute: [SELF, ip]}}
-            start_retry_interval:
-              description: Polling interval until the server is active in seconds
-              type: integer
-              default: 30
       cloudify.interfaces.validation:
         creation:
           implementation: mist.plugin.server.creation_validation
