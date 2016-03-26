@@ -164,10 +164,10 @@ def start(**_):
 
 
 @operation
-def install_kubernetes(master=False):
+def install_kubernetes(**kwargs):
     client = connection.MistConnectionClient().client
     machine = connection.MistConnectionClient().machine
-    if master:
+    if kwargs.get("master"):
         kub_type = "master"
     else:
         kub_type = "worker"
