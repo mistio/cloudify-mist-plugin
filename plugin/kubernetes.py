@@ -171,7 +171,7 @@ def install_kubernetes(**kwargs):
         kub_type = "master"
     else:
         kub_type = "worker"
-    with open("scripts/install_docker.sh", "r") as scriptfile:
+    with open("plugin/scripts/install_docker.sh", "r") as scriptfile:
         script = scriptfile.read()
     response = client.add_script(
         name="install_docker", script=script,
