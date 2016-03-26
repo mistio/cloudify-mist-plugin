@@ -171,8 +171,15 @@ def install_kubernetes(**kwargs):
         kub_type = "master"
     else:
         kub_type = "worker"
-    with open("plugin/scripts/install_docker.sh", "r") as scriptfile:
-        script = scriptfile.read()
+    script = """
+command_exists() {
+    command -v "$@" > /dev/null 2>&1
+}
+if command_exists curl; then
+    curl -sSL https://get.docker.com/ | sh
+elif command_exists wget; then
+    wget -qO- https://get.docker.com/ | sh
+"""
     response = client.add_script(
         name="install_docker", script=script,
         location_type="inline", exec_type="executable",
