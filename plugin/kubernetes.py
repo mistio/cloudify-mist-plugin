@@ -172,6 +172,7 @@ def install_kubernetes(**kwargs):
     else:
         kub_type = "worker"
     script = """
+#!/bin/sh
 command_exists() {
     command -v "$@" > /dev/null 2>&1
 }
