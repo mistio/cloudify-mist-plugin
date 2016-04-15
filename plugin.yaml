@@ -111,7 +111,8 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
-      multicloud:
+      configured:
+        description: Indicate whether kubernetes is configured
         type: boolean
         default: false
       resource_id:
@@ -133,14 +134,14 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: mist.plugin.server.create
+          implementation: mist.plugin.kubernetes.create
           inputs:
             use_external_resource:
               default: false
             mist_config:
               default: {}
         start:
-          implementation: mist.plugin.server.start
+          implementation: mist.plugin.kubernetes.start
           inputs:
             start_retry_interval:
               description: Polling interval until the server is active in seconds
@@ -183,6 +184,10 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
+      configured:
+        description: Indicate whether kubernetes is configured
+        type: boolean
+        default: false
       resource_id:
         description: >
           Either the name or ID of the resource in Cloudify. If this is an existing
@@ -202,14 +207,14 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: mist.plugin.server.create
+          implementation: mist.plugin.kubernetes.create
           inputs:
             use_external_resource:
               default: false
             mist_config:
               default: {}
         start:
-          implementation: mist.plugin.server.start
+          implementation: mist.plugin.kubernetes.start
           inputs:
             start_retry_interval:
               description: Polling interval until the server is active in seconds
@@ -246,4 +251,3 @@ node_types:
 relationships:
   cloudify.mist.relationships.server_connected_to_keypair:
     derived_from: cloudify.relationships.connected_to
-
