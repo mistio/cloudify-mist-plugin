@@ -7,7 +7,7 @@ setup(
     author='mist',
     author_email='info@mist.io',
     description='Cloudify plugin for Mist infrastructure.',
-    packages=['plugin'],
+    packages=['cloudify-mist-plugin'],
     license='LICENSE',
     zip_safe=False,
     install_requires=[
