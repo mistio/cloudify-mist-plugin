@@ -94,7 +94,7 @@ def create(**_):
         ctx.instance.runtime_properties['networks'] = {
             "default": machine.info["public_ips"][0]}
         ctx.instance.runtime_properties['machine_id'] = machine.info["id"]
-
+        ctx.instance.runtime_properties['cloud_id'] = cloud.id
         ctx.logger.info('External machine attached to ctx')
         return
     machines = cloud.machines(

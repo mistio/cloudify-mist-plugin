@@ -25,12 +25,15 @@ class MistConnectionClient(object):
         if self._client is None:
             if self.properties['mist_config'].get("mist_uri"):
                 mist_uri = self.properties['mist_config']["mist_uri"]
+                verify = False
             else:
                 mist_uri = "https://mist.io"
+                verify = True
             if self.properties['mist_config'].get("api_token"):
                 token = self.properties['mist_config']['api_token']
                 self._client = MistClient(mist_uri= mist_uri,
-                                          api_token= token)
+                                          api_token= token,
+                                          verify=verify)
             else:
                 self._client = MistClient(mist_uri= mist_uri,
                                           email=self.properties['mist_config']['username'],

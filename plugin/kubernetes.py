@@ -196,7 +196,7 @@ def create(**_):
         ctx.instance.runtime_properties['networks'] = {
             "default": public_ip}
         ctx.instance.runtime_properties['machine_id'] = machine_id = machine.info["id"]
-
+        ctx.instance.runtime_properties['cloud_id'] = cloud.id
         ctx.logger.info('External machine attached to ctx')
         return
     machine_name = ctx.node.properties['parameters']["name"]
@@ -223,23 +223,30 @@ def create(**_):
     else:
         networks = []
     ctx.logger.info('Networks are: {0}'.format(networks))
-    job_id = cloud.create_machine(async=True, name=machine_name,
+
+    job_id = cloud.create_machine(async=True, name=machine_name, fire_and_forget=True,
                                   key=key, image_id=ctx.node.properties['parameters']["image_id"],
                                   location_id=ctx.node.properties['parameters']["location_id"],
                                   size_id=ctx.node.properties['parameters']["size_id"],
                                   networks=networks,
                                   associate_floating_ip=True)
     job_id = job_id.json()["job_id"]
+
     job = client.get_job(job_id)
     timer = 0
     while True:
+
         if job["summary"]["probe"]["success"]:
             break
         if job["summary"]["create"]["error"] or job["summary"]["probe"]["error"]:
             ctx.logger.error('Error on machine creation:{0}'.format(job))
             raise NonRecoverableError("Not able to create machine")
         sleep(10)
-        job = client.get_job(job_id)
+        try:
+            job = client.get_job(job_id)
+        except Exception as exc:
+            print exc
+            pass
         timer += 1
         if timer >= 360:   # timeout 1hour
             raise NonRecoverableError("Timeout.Not able to create machine.")
