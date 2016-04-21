@@ -95,6 +95,7 @@ def create(**_):
             "default": machine.info["public_ips"][0]}
         ctx.instance.runtime_properties['machine_id'] = machine.info["id"]
         ctx.instance.runtime_properties['cloud_id'] = cloud.id
+        ctx.instance.runtime_properties['mist_type'] = "machine"
         ctx.logger.info('External machine attached to ctx')
         return
     machines = cloud.machines(
@@ -147,6 +148,8 @@ def create(**_):
     # print job["summary"]
     machine = mist_client.machine
     ctx.instance.runtime_properties['machine_id'] = machine.info["id"]
+    ctx.instance.runtime_properties['cloud_id'] = cloud.id
+    ctx.instance.runtime_properties['mist_type'] = "machine"
     ctx.instance.runtime_properties['ip'] = machine.info["public_ips"][0]
     ctx.instance.runtime_properties['networks'] = {
         "default": machine.info["public_ips"][0]}

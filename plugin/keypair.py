@@ -53,6 +53,8 @@ def create(**kwargs):
         return
 
     key_pair_name = get_resource_id()
+    ctx.instance.runtime_properties["key_id"] = key_pair_name
+    ctx.instance.runtime_properties["mist_type"] = "keypair"
 
     ctx.logger.debug('Attempting to create key pair.')
     kp=mist_client.keys(search=key_pair_name)
@@ -106,7 +108,7 @@ def _create_external_keypair():
     print "create external keypair"
     if not use_external_resource(ctx.node.properties):
         return False
-
+    ctx.instance.runtime_properties["mist_type"] = "keypair"
     key_pair_name = ctx.node.properties['resource_id']
     key_pair_in_account = _get_key_pair_by_id(key_pair_name)
     key_path_in_filesystem = _get_path_to_key_file()
@@ -117,6 +119,7 @@ def _create_external_keypair():
             'External resource, but the key pair is not in the account.')
     if not _search_for_key_file(key_path_in_filesystem):
         _save_key_pair(key_pair_in_account)
+    ctx.instance.runtime_properties["key_id"] = key_pair_name
         # raise NonRecoverableError(
         #     'External resource, but the key file does not exist.')
     set_external_resource_id(key_pair_name)

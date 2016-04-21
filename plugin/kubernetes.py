@@ -197,6 +197,8 @@ def create(**_):
             "default": public_ip}
         ctx.instance.runtime_properties['machine_id'] = machine_id = machine.info["id"]
         ctx.instance.runtime_properties['cloud_id'] = cloud.id
+        ctx.instance.runtime_properties['mist_type'] = "machine"
+
         ctx.logger.info('External machine attached to ctx')
         return
     machine_name = ctx.node.properties['parameters']["name"]
@@ -220,6 +222,7 @@ def create(**_):
     # print 'Key:', key
     if ctx.node.properties['parameters'].get("networks"):
         networks = ctx.node.properties['parameters']["networks"]
+        ctx.instance.runtime_properties["networks"] = networks
     else:
         networks = []
     ctx.logger.info('Networks are: {0}'.format(networks))
@@ -245,7 +248,6 @@ def create(**_):
         try:
             job = client.get_job(job_id)
         except Exception as exc:
-            print exc
             pass
         timer += 1
         if timer >= 360:   # timeout 1hour
@@ -254,6 +256,8 @@ def create(**_):
     # print job["summary"]
     machine = mist_client.machine
     ctx.instance.runtime_properties['machine_id'] = machine.info["id"]
+    ctx.instance.runtime_properties['cloud_id'] = cloud.id
+    ctx.instance.runtime_properties['mist_type'] = "machine"
     if len(machine.info["public_ips"]):
         ctx.instance.runtime_properties['ip'] = machine.info["public_ips"][0]
         ctx.instance.runtime_properties['networks'] = {
