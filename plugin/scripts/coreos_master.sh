@@ -230,6 +230,9 @@ curl -X PUT -d "value={\"Network\":\"$POD_NETWORK\",\"Backend\":{\"Type\":\"vxla
 # Start kubelet and wait for it to do its job
 systemctl start kubelet
 systemctl enable kubelet
+
+# Do not reboot-strategy
+echo "REBOOT_STRATEGY=off" >> /etc/coreos/update.conf
 echo "Sleeping for 60 seconds to let kubelet do its job"
 sleep 80
 

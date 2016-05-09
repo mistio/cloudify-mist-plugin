@@ -90,3 +90,7 @@ EOF
 
 systemctl daemon-reload
 systemctl start kubelet
+systemctl enable kubelet
+
+echo "REBOOT_STRATEGY=off" >> /etc/coreos/update.conf
+
