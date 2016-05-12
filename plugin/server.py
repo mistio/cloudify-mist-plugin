@@ -88,15 +88,27 @@ def create(**_):
     mist_client = connection.MistConnectionClient()
     client = mist_client.client
     cloud = mist_client.cloud
+    params = ctx.node.properties['parameters']
     if ctx.node.properties['use_external_resource']:
         machine = mist_client.machine
-        ctx.instance.runtime_properties = machine.info
+        ctx.instance.runtime_properties["info"] = machine.info
+        ctx.instance.runtime_properties["ip"] = machine.info["public_ips"][0]
+        ctx.instance.runtime_properties["networks"] = machine.info["public_ips"]
+        ctx.instance.runtime_properties["mist_type"] = "machine"
+
         return
     try:
-        cloud.create_machine(async=True, **ctx.node.properties['parameters'])
+        del params['cloud_id']
+        cloud.create_machine(async=True, verbose=True, fire_and_forget=False,
+                             **params)
     except Exception as exc:
         raise NonRecoverableError(exc)
     machine = mist_client.machine
+    ctx.instance.runtime_properties["info"] = machine.info
+    ctx.instance.runtime_properties["ip"] = machine.info["public_ips"][0]
+    ctx.instance.runtime_properties["networks"] = machine.info["public_ips"]
+    ctx.instance.runtime_properties["mist_type"] = "machine"
+    # ctx.instance.runtime_properties["private_key_path"] = machine.info["public_ips"]
     ctx.logger.info('Machine created')
 
 
