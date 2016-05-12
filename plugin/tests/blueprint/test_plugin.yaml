@@ -1,24 +1,10 @@
+tosca_definitions_version: cloudify_dsl_1_0
+
 plugins:
-    # Name could be anything, this name is what appears on the beginning of operation
-    # mappings.
     mist:
-        # Could be 'central_deployment_agent' or 'host_agent'.
-        # If 'central_deployment_agent', this plugin will be executed on the
-        # deployment dedicated agent, other wise it will be executed on the host agent.
-        # We set it the 'central_deployment_agent' here because 'host_agent' plugins should
-        # be contained in a host and this is not required for testing purposes
         executor: central_deployment_agent
+        source: "https://github.com/mistio/cloudify-mist-plugin/archive/simplify.zip"
 
-        # Setting install to false in testing environment. In the non-test plugin definition
-        # this property could be omitted usually (its default is true), in which case
-        # the source property should be set
-        install: true
-        source: "https://github.com/mistio/cloudify-mist-plugin/archive/testing.zip"
-
-        # source: URL to archive containing the plugin or name of directory containing
-        #         the plugin if it is included in the the blueprint directory under the
-        #         "plugins" directory. Not required in testing environments as the plugin
-        #         need not be installed on any agent
 node_types:
   cloudify.mist.nodes.KeyPair:
     derived_from: cloudify.nodes.Root
@@ -43,9 +29,9 @@ node_types:
         default: ''
       parameters:
         description: >
-          The key value pair parameters required by Mist Client to use 
+          The key value pair parameters required by Mist Client to use
           the mist.client.backend.create_machine command.(backend_id,image_id
-          size_id, location_id, name, monitoring, ssh_user )
+          size_id, location_id, name, monitoring, ssh_user, networks)
         default: {}
       mist_config:
         description: >
@@ -75,48 +61,16 @@ node_types:
         default: ''
       parameters:
         description: >
-          The key value pair parameters required by Mist Client to use 
+          The key value pair parameters required by Mist Client to use
           the mist.client.backend.create_machine command.(backend_id,image_id
-          size_id, location_id, name, monitoring, ssh_user )
+          size_id, location_id, name, monitoring, ssh_user, networks )
         default: {}
       mist_config:
         description: >
           A dictionary of values to pass to authenticate with the Mist API.
         default: {}
-      # username: 
-      #   default: ''
-      # password:
-      #   default: ''
-      # backend_id:
-      #   default: ''
-      # image_id:
-      #   default: ''
-      # size_id:
-      #   default: ''
-      # location_id:
-      #   default: ''
-      # name:
-      #   default: '' 
-      # private_key_path:
-      #   default: ''
-      # use_external_resource:
-      #   default: false
-      # resource_id:
-      #   default: ''
-      # key:
-      #   default: ''  
-      # monitoring:
-      #   default: false  
-      # ssh_user:
-      #   default: ''
-
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure:
-          implementation: mist.plugin.server.run_script
-          inputs:
-            script:
-              default: hello.sh
         create:
           implementation: mist.plugin.server.create
           inputs:
@@ -144,11 +98,7 @@ node_types:
       cloudify.interfaces.validation:
         creation:
           implementation: mist.plugin.server.creation_validation
-          inputs:
-            args:
-              default: {}
- 
+
 relationships:
   cloudify.mist.relationships.server_connected_to_keypair:
     derived_from: cloudify.relationships.connected_to
-
