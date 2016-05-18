@@ -1,4 +1,6 @@
-tosca_definitions_version: cloudify_dsl_1_1
+
+
+tosca_definitions_version: cloudify_dsl_1_0
 
 plugins:
     mist:
@@ -101,6 +103,41 @@ node_types:
           inputs:
             args:
               default: {}
+
+
+  cloudify.mist.nodes.Network:
+    derived_from: cloudify.nodes.Network
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          Either the name or ID of the resource in Cloudify. If this is an existing
+          resource, you should provide the name or the ID of the resource in Mist.io.
+        type: string
+        default: ''
+      parameters:
+        description: >
+          The key value pair parameters required by Mist Client to use
+          the mist.client.cloud.create_network command.(
+          {"network":{"name":"testnet","admin_state_up":true},
+          "subnet":{"name":"happy_subnet","ip_version":"4","cidr":"",
+          "gateway_ip":"","enable_dhcp":true,
+          "allocation_pools":[{"start":"","end":""}]}}: )
+        default: {}
+      mist_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Mist API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: mist.plugin.network.create
+        delete:
+          implementation: mist.plugin.network.delete
 
 
   cloudify.mist.nodes.KubernetesMaster:
@@ -247,7 +284,17 @@ node_types:
             args:
               default: {}
 
-
 relationships:
   cloudify.mist.relationships.server_connected_to_keypair:
     derived_from: cloudify.relationships.connected_to
+  cloudify.mist.relationships.server_connected_to_network:
+    derived_from: cloudify.relationships.depends_on
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: mist.plugin.network.associate_network
+          inputs:
+            ip:
+              default: ''
+            assign:
+              default: true

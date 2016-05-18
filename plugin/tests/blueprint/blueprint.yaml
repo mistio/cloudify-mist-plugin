@@ -135,6 +135,18 @@ inputs:
     ssh_port:
         type: integer
         default: 22
+    network_name:
+        type: string
+        default: test_net_delete
+    net_external_resource:
+        type: boolean
+        default: false
+    net_external_resource_id:
+        type: string
+        default: ''
+    provider:
+        type: string
+        default: ''
 
 node_templates:
     # defining a single node template that will serve as our test node
@@ -173,14 +185,34 @@ node_templates:
                 # location_id: { get_input: location_id }
                 name: { get_input: machine_name }
                 monitoring: { get_input: monitoring }
-                image_id: ami-a21529cc
-                disk: 0
-                networks: []
-                size_id: t2.micro
+                image_id: { get_input: image_id }
+                disk: { get_input: disk }
+                networks: { get_input: networks }
+                size_id: { get_input: size_id }
                 script: ''
-                location_id: '0'
-                provider: ec2_ap_northeast
+                location_id: { get_input: location_id }
+                provider: { get_input: provider }
         relationships:
             - target: test_server_key
               type: cloudify.mist.relationships.server_connected_to_keypair
+
+
+    test_network_node:
+        type: cloudify.mist.nodes.Network
+        properties:
+            use_external_resource: { get_input: net_external_resource }
+            resource_id: { get_input: net_external_resource_id }
+            mist_config:
+                mist_uri: { get_input: mist_uri}
+                username: { get_input: username }
+                password: { get_input: password }
+                api_token: {get_input: api_token}
+            parameters:
+                cloud_id: { get_input: cloud_id }
+                network:
+                    name: { get_input: network_name }
+                    admin_state_up: true
+        relationships:
+            - target: test_server_node
+              type: cloudify.mist.relationships.server_connected_to_network
 
