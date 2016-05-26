@@ -1,9 +1,9 @@
-tosca_definitions_version: cloudify_dsl_1_1
+tosca_definitions_version: cloudify_dsl_1_2
 
 plugins:
     mist:
-        executor: central_deployment_agent
-        source: "https://github.com/mistio/cloudify-mist-plugin/archive/simplify.zip"
+      executor: central_deployment_agent
+      source: "https://github.com/mistio/cloudify-mist-plugin/archive/simplify.zip"
 
 data_types:
   cloudify.datatypes.mist.Config:
@@ -144,7 +144,7 @@ node_types:
           The key value pair parameters required by Mist Client to use
           the mist.client.backend.create_machine command.(backend_id,image_id
           size_id, location_id, name, monitoring, ssh_user, networks)
-        type: cloudify.datatypes.mist.MachineParams
+        default: {}
       mist_config:
         description: >
           A dictionary of values to pass to authenticate with the Mist API.
@@ -281,7 +281,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: mist.kubernetes_plugin.kubernetes.install_kubernetes
+          implementation: mist.plugin.kubernetes.install_kubernetes
           inputs:
             master:
               type: boolean
@@ -324,7 +324,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: mist.kubernetes_plugin.kubernetes.install_kubernetes
+          implementation: mist.plugin.kubernetes.install_kubernetes
           inputs:
             master:
               type: boolean
