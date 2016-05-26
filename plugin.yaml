@@ -268,6 +268,9 @@ node_types:
           resource, you should provide the name or the ID of the resource in Mist.io.
         type: string
         default: ''
+      coreos:
+        type: boolean
+        default: false
       parameters:
         description: >
           The key value pair parameters required by Mist Client to use
@@ -317,6 +320,9 @@ node_types:
           the mist.client.backend.create_machine command.(backend_id,image_id
           size_id, location_id, name, monitoring, ssh_user, networks )
         default: {}
+      coreos:
+        type: boolean
+        default: false
       mist_config:
         description: >
           A dictionary of values to pass to authenticate with the Mist API.
