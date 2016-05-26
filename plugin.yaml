@@ -1,11 +1,121 @@
-
-
-tosca_definitions_version: cloudify_dsl_1_0
+tosca_definitions_version: cloudify_dsl_1_1
 
 plugins:
     mist:
         executor: central_deployment_agent
-        source: "https://github.com/mistio/cloudify-mist-plugin/archive/master.zip"
+        source: "https://github.com/mistio/cloudify-mist-plugin/archive/simplify.zip"
+
+data_types:
+  cloudify.datatypes.mist.Config:
+    properties:
+      username:
+          description: an input for the test
+          default: ''
+      password:
+          description: an input for the test
+          default: ''
+      api_token:
+          description: an input for the test
+          default: ''
+      mist_uri:
+          type: string
+          default: https://mist.io
+  cloudify.datatypes.mist.MachineParams:
+    properties:
+      azure_port_bindings:
+          type: string
+          default: ''
+      bare_metal:
+          type: string
+          default: ''
+      billing:
+          type: string
+          default: ''
+      cloud_id:
+          type: string
+          default: ''
+      disk:
+          type: string
+          default: ''
+      docker_command:
+          type: string
+          default: ''
+      docker_env:
+          default: []
+      docker_exposed_ports:
+          default: {}
+      docker_port_bindings:
+          default: {}
+      hostname:
+          type: string
+          default: ''
+      image_extra:
+          type: string
+          default: ''
+      image_id:
+          type: string
+          default: ''
+      image_name:
+          type: string
+          default: ''
+      ips:
+          type: string
+          default: ''
+      key_id:
+          type: string
+      location_id:
+          type: string
+          default: ''
+      location_name:
+          type: string
+          default: ''
+      machine_name:
+          type: string
+          default: ''
+      monitoring:
+          type: boolean
+          default: false
+      networks:
+          default: []
+      plugins:
+          default: []
+      post_script_id:
+          type: string
+          default: ''
+      post_script_params:
+          type: string
+          default: ''
+      project_id:
+          type: string
+          default: ''
+      quantity:
+          type: integer
+          default: 1
+      script:
+          type: string
+          default: ''
+      script_id:
+          type: string
+          default: ''
+      script_params:
+          type: string
+          default: ''
+      size_id:
+          type: string
+          default: ''
+      size_name:
+          type: string
+          default: ''
+      softlayer_backend_vlan_id:
+          type: string
+          default: ''
+      ssh_port:
+          type: integer
+          default: 22
+      provider:
+          type: string
+          default: ''
+
 
 node_types:
   cloudify.mist.nodes.KeyPair:
@@ -34,11 +144,11 @@ node_types:
           The key value pair parameters required by Mist Client to use
           the mist.client.backend.create_machine command.(backend_id,image_id
           size_id, location_id, name, monitoring, ssh_user, networks)
-        default: {}
+        type: cloudify.datatypes.mist.MachineParams
       mist_config:
         description: >
           A dictionary of values to pass to authenticate with the Mist API.
-        default: {}
+        type: cloudify.datatypes.mist.Config
     interfaces:
       cloudify.interfaces.lifecycle:
         create: mist.plugin.keypair.create
@@ -66,11 +176,11 @@ node_types:
           The key value pair parameters required by Mist Client to use
           the mist.client.backend.create_machine command.(backend_id,image_id
           size_id, location_id, name, monitoring, ssh_user, networks )
-        default: {}
+        type: cloudify.datatypes.mist.MachineParams
       mist_config:
         description: >
           A dictionary of values to pass to authenticate with the Mist API.
-        default: {}
+        type: cloudify.datatypes.mist.Config
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -141,7 +251,7 @@ node_types:
 
 
   cloudify.mist.nodes.KubernetesMaster:
-    derived_from: cloudify.nodes.Compute
+    derived_from: cloudify.mist.nodes.Server
     properties:
       use_external_resource:
         description: >
@@ -163,29 +273,15 @@ node_types:
           The key value pair parameters required by Mist Client to use
           the mist.client.backend.create_machine command.(backend_id,image_id
           size_id, location_id, name, monitoring, ssh_user, networks )
-        default: {}
+        type: cloudify.datatypes.mist.MachineParams
       mist_config:
         description: >
           A dictionary of values to pass to authenticate with the Mist API.
-        default: {}
+        type: cloudify.datatypes.mist.Config
     interfaces:
       cloudify.interfaces.lifecycle:
-        create:
-          implementation: mist.plugin.kubernetes.create
-          inputs:
-            use_external_resource:
-              default: false
-            mist_config:
-              default: {}
-        start:
-          implementation: mist.plugin.kubernetes.start
-          inputs:
-            start_retry_interval:
-              description: Polling interval until the server is active in seconds
-              type: integer
-              default: 30
         configure:
-          implementation: mist.plugin.kubernetes.install_kubernetes
+          implementation: mist.kubernetes_plugin.kubernetes.install_kubernetes
           inputs:
             master:
               type: boolean
@@ -194,27 +290,11 @@ node_types:
               description: Polling interval until the server is active in seconds
               type: integer
               default: 30
-        stop:
-          implementation: mist.plugin.server.stop
-          inputs:
-            mist_config:
-              default: {}
-        delete:
-          implementation: mist.plugin.server.delete
-          inputs:
-            mist_config:
-              default: {}
-      cloudify.interfaces.validation:
-        creation:
-          implementation: mist.plugin.server.creation_validation
-          inputs:
-            args:
-              default: {}
 
 
 
   cloudify.mist.nodes.KubernetesWorker:
-    derived_from: cloudify.nodes.Compute
+    derived_from: cloudify.mist.nodes.Server
     properties:
       use_external_resource:
         description: >
@@ -243,22 +323,8 @@ node_types:
         default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
-        create:
-          implementation: mist.plugin.kubernetes.create
-          inputs:
-            use_external_resource:
-              default: false
-            mist_config:
-              default: {}
-        start:
-          implementation: mist.plugin.kubernetes.start
-          inputs:
-            start_retry_interval:
-              description: Polling interval until the server is active in seconds
-              type: integer
-              default: 30
         configure:
-          implementation: mist.plugin.kubernetes.install_kubernetes
+          implementation: mist.kubernetes_plugin.kubernetes.install_kubernetes
           inputs:
             master:
               type: boolean
@@ -267,22 +333,7 @@ node_types:
               description: Polling interval until the server is active in seconds
               type: integer
               default: 30
-        stop:
-          implementation: mist.plugin.server.stop
-          inputs:
-            mist_config:
-              default: {}
-        delete:
-          implementation: mist.plugin.server.delete
-          inputs:
-            mist_config:
-              default: {}
-      cloudify.interfaces.validation:
-        creation:
-          implementation: mist.plugin.server.creation_validation
-          inputs:
-            args:
-              default: {}
+
 
 relationships:
   cloudify.mist.relationships.server_connected_to_keypair:
