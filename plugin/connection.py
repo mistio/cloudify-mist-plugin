@@ -83,7 +83,7 @@ class MistConnectionClient(object):
         if self.ctx:
             if ctx.instance.runtime_properties.get('machine_id'):
                 return self.cloud.machines(id=ctx.instance.runtime_properties['machine_id'])[0]
-        machines = self.cloud.machines(search=self.properties['parameters']["name"])
+        machines = self.cloud.machines(search=self.properties['parameters']["machine_name"])
         if len(machines) > 1:
             if self.ctx:
                 ctx.logger.info('Found multiple machines with the same name')
@@ -111,7 +111,7 @@ class MistConnectionClient(object):
                     "External resource state {0}".format(machines[0].info["state"]))
             return machines[0]
 
-        machines = self.cloud.machines(search=kwargs["name"])
+        machines = self.cloud.machines(search=kwargs["machine_name"])
         if len(machines) > 1:
             for m in machines:
                 if m.info["state"] in ["running","stopped"]:
