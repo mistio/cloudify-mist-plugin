@@ -188,13 +188,13 @@ def install_kubernetes(**kwargs):
     if kwargs.get("master"):
         ctx.instance.runtime_properties["master_ip"] = machine.info["private_ips"][0]
         kub_type = "master"
-        if ctx.node.properties["parameters"]["coreos"]:
+        if ctx.node.properties["coreos"]:
             install_script = install_coreos_master_script
         else:
             install_script = install_master_script
     else:
         ctx.instance.runtime_properties["master_ip"] = ctx.instance.relationships[0]._target.instance.runtime_properties["master_ip"]
-        if ctx.node.properties["parameters"]["coreos"]:
+        if ctx.node.properties["coreos"]:
             install_script = install_coreos_worker_script
         else:
             install_script = install_worker_script
@@ -202,7 +202,7 @@ def install_kubernetes(**kwargs):
 
     if ctx.node.properties["configured"]:
         return
-    if not ctx.node.properties["parameters"]["coreos"]:
+    if not ctx.node.properties["coreos"]:
         script = """#!/bin/sh
         command_exists() {
         command -v "$@" > /dev/null 2>&1

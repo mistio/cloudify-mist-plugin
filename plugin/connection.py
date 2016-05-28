@@ -92,7 +92,7 @@ class MistConnectionClient(object):
                     machines[0] = m
                     break
         if self.ctx:
-            ctx.instance.runtime_properties['machine_id']=machines[0].info["id"]
+            ctx.instance.runtime_properties['machine_id'] = machines[0].info["id"]
         return machines[0]
 
 
