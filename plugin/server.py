@@ -11,8 +11,6 @@ import string
 import random
 
 
-
-
 @operation
 def creation_validation(**_):
     """ This checks that all user supplied info is valid """
@@ -26,7 +24,7 @@ def creation_validation(**_):
     for property_key in constants.INSTANCE_REQUIRED_PROPERTIES:
         if property_key not in ctx.node.properties:
             raise NonRecoverableError(
-                '{0} is a required input. Unable to create.'.format(key))
+                '{0} is a required input. Unable to create.'.format(property_key))
     cloud = client.clouds(id=ctx.node.properties['cloud_id'])
     if not len(cloud):
         raise NonRecoverableError(
@@ -86,7 +84,7 @@ def creation_validation(**_):
 @operation
 def create(**_):
     mist_client = connection.MistConnectionClient()
-    client = mist_client.client
+    # client = mist_client.client
     cloud = mist_client.cloud
     params = ctx.node.properties['parameters']
     if ctx.node.properties['use_external_resource']:
@@ -150,20 +148,17 @@ def delete(**_):
 @operation
 def run_script(**kwargs):
     client = connection.MistConnectionClient().client
-    script = kwargs.get('script', '')
-    name = kwargs.get("name", '')
-    scripts = client.get_scripts()
     machine = connection.MistConnectionClient().machine
     script_params = kwargs.get("params","")
     if kwargs.get("script_id", ''):
-        script_id = kwargs["script_id"]
+        # script_id = kwargs["script_id"]
         try:
             job_id = machine.run_script(**kwargs)
         except Exception as exc:
             raise NonRecoverableError(exc)
 
     else:
-        script_id = response['script_id']
+        # script_id = response['script_id']
         try:
             response = client.add_and_run_script(machine.cloud.id, machine.id,
                                                  script_params=script_params,
