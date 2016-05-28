@@ -140,8 +140,7 @@ node_types:
         default: ''
       key_name:
         description:>
-          Enter the name of the key to be created if not using external resource
-        type: string
+          Enter the name of the key to be created if not using external resource.
         default: ''
       parameters:
         description: >
