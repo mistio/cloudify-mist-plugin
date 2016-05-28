@@ -34,9 +34,6 @@ def delete(**_):
 
 @operation
 def associate_network(**kwargs):
-    print "associatekk"
-    import ipdb
-    ipdb.set_trace()
     ip = kwargs.get("ip")
     assign = kwargs.get("assign")
     machine_id = ctx.target.instance.runtime_properties["machine_id"]
