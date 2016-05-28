@@ -53,7 +53,7 @@ def create(**kwargs):
         return
 
     key_pair_name = get_resource_id()
-    ctx.instance.runtime_properties["key_id"] = key_pair_name
+    ctx.instance.runtime_properties["key"] = key_pair_name
     ctx.instance.runtime_properties["mist_type"] = "keypair"
 
     ctx.logger.debug('Attempting to create key pair.')
@@ -61,6 +61,7 @@ def create(**kwargs):
     if len(kp):
         kp = kp[0]
     else:
+        key_pair_name = ctx.node.properties["key_name"]
         private = mist_client.generate_key()
         mist_client.add_key(key_name=key_pair_name, private=private)
         mist_client.update_keys()
