@@ -22,76 +22,44 @@ data_types:
           default: https://mist.io
   cloudify.datatypes.mist.MachineParams:
     properties:
-      azure_port_bindings:
-          type: string
-          default: ''
-      bare_metal:
-          type: string
-          default: ''
-      billing:
-          type: string
-          default: ''
       cloud_id:
           type: string
           default: ''
-      disk:
+      name:
           type: string
           default: ''
-      docker_command:
-          type: string
-          default: ''
-      docker_env:
-          default: []
-      docker_exposed_ports:
-          default: {}
-      docker_port_bindings:
-          default: {}
-      hostname:
-          type: string
-          default: ''
-      image_extra:
+      key:
           type: string
           default: ''
       image_id:
           type: string
           default: ''
-      image_name:
+      size_id:
           type: string
           default: ''
-      ips:
-          type: string
-          default: ''
-      key_id:
-          type: string
       location_id:
           type: string
           default: ''
       location_name:
           type: string
           default: ''
-      machine_name:
+      image_extra:
+          type: string
+          default: ''
+      disk:
+          type: string
+          default: ''
+      script:
           type: string
           default: ''
       monitoring:
           type: boolean
           default: false
+      ips:
+          default: []
       networks:
           default: []
-      plugins:
-          default: []
-      post_script_id:
-          type: string
-          default: ''
-      post_script_params:
-          type: string
-          default: ''
-      project_id:
-          type: string
-          default: ''
-      quantity:
-          type: integer
-          default: 1
-      script:
+      docker_command:
           type: string
           default: ''
       script_id:
@@ -100,21 +68,52 @@ data_types:
       script_params:
           type: string
           default: ''
-      size_id:
-          type: string
-          default: ''
-      size_name:
-          type: string
-          default: ''
-      softlayer_backend_vlan_id:
-          type: string
-          default: ''
-      ssh_port:
-          type: integer
-          default: 22
       provider:
           type: string
           default: ''
+      associate_floating_ip:
+          default: False
+      # docker_exposed_ports:
+      #     default: {}
+      # docker_port_bindings:
+      #     default: {}
+      # hostname:
+      #     type: string
+      #     default: ''
+      # image_id:
+      #     type: string
+      #     default: ''
+      # image_name:
+      #     type: string
+      #     default: ''
+      # key_id:
+      #     type: string
+      # machine_name:
+      #     type: string
+      #     default: ''
+      # plugins:
+      #     default: []
+      # post_script_id:
+      #     type: string
+      #     default: ''
+      # post_script_params:
+      #     type: string
+      #     default: ''
+      # project_id:
+      #     type: string
+      #     default: ''
+      # quantity:
+      #     type: integer
+      #     default: 1
+      # size_name:
+      #     type: string
+      #     default: ''
+      # softlayer_backend_vlan_id:
+      #     type: string
+      #     default: ''
+      # ssh_port:
+      #     type: integer
+      #     default: 22
 
 
 node_types:
@@ -137,6 +136,11 @@ node_types:
           The path where the key should be saved on the machine. If this is a bootstrap
           process, this refers to the local computer. If this will run on the manager,
           this will be saved on the manager.
+        type: string
+        default: ''
+      key_name:
+        description:>
+          Enter the name of the key to be created if not using external resource
         type: string
         default: ''
       parameters:
@@ -321,6 +325,7 @@ node_types:
           size_id, location_id, name, monitoring, ssh_user, networks )
         default: {}
       coreos:
+        description: Whether it's a coreos image or not
         type: boolean
         default: false
       mist_config:
