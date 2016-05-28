@@ -97,8 +97,12 @@ def create(**_):
         return
     try:
         del params['cloud_id']
-        cloud.create_machine(async=True, verbose=True, fire_and_forget=False,
-                             **params)
+        job = cloud.create_machine(async=True, verbose=True, fire_and_forget=False,
+                                   **params)
+        for i in job["logs"]:
+            if job["logs"][i]["action"] == 'machine_creation_finished':
+                ctx.instance.runtime_properties["machine_id"] = job["logs"][i]["machine_id"]
+                break
     except Exception as exc:
         raise NonRecoverableError(exc)
     machine = mist_client.machine
