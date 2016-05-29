@@ -108,7 +108,8 @@ def create(**_):
         raise NonRecoverableError(exc)
     machine = mist_client.machine
     ctx.instance.runtime_properties["info"] = machine.info
-    ctx.instance.runtime_properties["ip"] = machine.info["public_ips"][0]
+    if len(machine.info["public_ips"]):
+        ctx.instance.runtime_properties["ip"] = machine.info["public_ips"][0]
     ctx.instance.runtime_properties["networks"] = machine.info["public_ips"]
     ctx.instance.runtime_properties["mist_type"] = "machine"
     # ctx.instance.runtime_properties["private_key_path"] = machine.info["public_ips"]
