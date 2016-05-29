@@ -81,7 +81,8 @@ class MistConnectionClient(object):
             return machines[0]
 
         if self.ctx:
-            if ctx.instance.runtime_properties.get('machine_id'):
+            if ctx.instance.runtime_properties['machine_id']:
+
                 return self.cloud.machines(id=ctx.instance.runtime_properties['machine_id'])[0]
         machines = self.cloud.machines(search=self.properties['parameters']["name"])
         if len(machines) > 1:
@@ -92,7 +93,7 @@ class MistConnectionClient(object):
                     machines[0] = m
                     break
         if self.ctx:
-            ctx.instance.runtime_properties['machine_id']=machines[0].info["id"]
+            ctx.instance.runtime_properties['machine_id'] = machines[0].info["id"]
         return machines[0]
 
 

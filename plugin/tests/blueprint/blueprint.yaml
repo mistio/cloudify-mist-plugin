@@ -8,9 +8,9 @@ imports:
     # including it in the blueprint directory and importing it
     # instead.
     - http://www.getcloudify.org/spec/cloudify/3.3m5/types.yaml
-    - http://www.getcloudify.org/spec/diamond-plugin/1.3m5/plugin.yaml
+    # - http://www.getcloudify.org/spec/diamond-plugin/1.3m5/plugin.yaml
     # relative import of plugin.yaml that resides in the blueprint directory
-    - http://www.getcloudify.org/spec/fabric-plugin/1.1/plugin.yaml
+    # - http://www.getcloudify.org/spec/fabric-plugin/1.1/plugin.yaml
     - test_plugin.yaml
 
 inputs:
@@ -23,44 +23,130 @@ inputs:
         default: ec2-user
     private_key_path:
         description: an input for the test
-        default: ssh_keys/id-rsa
+        default: id-rsa
     username:
         description: an input for the test
         default: ''
     password:
         description: an input for the test
         default: ''
-    key_name:
+    api_token:
         description: an input for the test
-        default: demo_lamp_de
-    backend_id:
-        description: an input for the test
-        default: 3ZWJJEemA4hoMaxUZiWQgi686Rvi
-    image_id:
-        description: an input for the test
-        default: ami-5da23a2a
-    size_id:
-        description: an input for the test
-        default: t1.micro
-    location_id:
-        description: an input for the test
-        default: '0'
+        default: ''
     key_external_resource:
         description: an input for the test
-        default: true
+        default: false
     node_external_resource:
         description: an input for the test
-        default: true
-    monitoring:
-        description: an input for the test
         default: false
-    name:
-        description: an input for the test
-        default: lamptest
     node_external_resource_id:
         description: an input for the test
-        default: i-36e2569a
-
+        default: i-5cea61c3
+    mist_uri:
+        type: string
+        default: https://mist.io
+    azure_port_bindings:
+        type: string
+        default: ''
+    bare_metal:
+        type: string
+        default: ''
+    billing:
+        type: string
+        default: ''
+    cloud_id:
+        type: string
+        default: ''
+    disk:
+        type: string
+        default: ''
+    docker_command:
+        type: string
+        default: ''
+    docker_env:
+        default: []
+    docker_exposed_ports:
+        default: {}
+    docker_port_bindings:
+        default: {}
+    hostname:
+        type: string
+        default: ''
+    image_extra:
+        type: string
+        default: ''
+    image_id:
+        type: string
+        default: ''
+    image_name:
+        type: string
+        default: ''
+    ips:
+        type: string
+        default: ''
+    key_id:
+        type: string
+    location_id:
+        type: string
+        default: ''
+    location_name:
+        type: string
+        default: ''
+    machine_name:
+        type: string
+        default: ''
+    monitoring:
+        type: boolean
+        default: false
+    networks:
+        default: []
+    plugins:
+        default: []
+    post_script_id:
+        type: string
+        default: ''
+    post_script_params:
+        type: string
+        default: ''
+    project_id:
+        type: string
+        default: ''
+    quantity:
+        type: integer
+        default: 1
+    script:
+        type: string
+        default: ''
+    script_id:
+        type: string
+        default: ''
+    script_params:
+        type: string
+        default: ''
+    size_id:
+        type: string
+        default: ''
+    size_name:
+        type: string
+        default: ''
+    softlayer_backend_vlan_id:
+        type: string
+        default: ''
+    ssh_port:
+        type: integer
+        default: 22
+    network_name:
+        type: string
+        default: test_net_delete
+    net_external_resource:
+        type: boolean
+        default: false
+    net_external_resource_id:
+        type: string
+        default: ''
+    provider:
+        type: string
+        default: ''
 
 node_templates:
     # defining a single node template that will serve as our test node
@@ -68,18 +154,17 @@ node_templates:
         type: cloudify.mist.nodes.KeyPair
         properties:
             use_external_resource: { get_input: key_external_resource }
-            resource_id: { get_input: key_name }
+            resource_id: { get_input: key_id }
             private_key_path: { get_input: private_key_path }
             mist_config:
+                mist_uri: { get_input: mist_uri}
                 username: { get_input: username }
-                password: { get_input: password }            
+                password: { get_input: password }
+                api_token: {get_input: api_token}
+
             parameters:
-                backend_id: { get_input: backend_id }
-                image_id: { get_input: image_id }
-                size_id: { get_input: size_id }
-                location_id: { get_input: location_id }
-                name: { get_input: name } 
-                monitoring: { get_input: monitoring }    
+                key_name: { get_input: key_id }
+
     test_server_node:
         # using base cloudify type
         type: cloudify.mist.nodes.Server    # cloudify.nodes.Root
@@ -87,19 +172,47 @@ node_templates:
             install_agent: false
             use_external_resource: { get_input: node_external_resource }
             resource_id: { get_input: node_external_resource_id }
-            parameters:
-                key_name: { get_input: key_name }
-                backend_id: { get_input: backend_id }
-                image_id: { get_input: image_id }
-                size_id: { get_input: size_id }
-                location_id: { get_input: location_id }
-                name: { get_input: name } 
-                monitoring: { get_input: monitoring }
             mist_config:
+                mist_uri: { get_input: mist_uri}
                 username: { get_input: username }
                 password: { get_input: password }
+                api_token: {get_input: api_token}
+            parameters:
+                key: { get_input: key_id }
+                cloud_id: { get_input: cloud_id }
+                # image_id: { get_input: image_id }
+                # size_id: { get_input: size_id }
+                # location_id: { get_input: location_id }
+                name: { get_input: machine_name }
+                monitoring: { get_input: monitoring }
+                image_id: { get_input: image_id }
+                disk: { get_input: disk }
+                networks: { get_input: networks }
+                size_id: { get_input: size_id }
+                script: ''
+                location_id: { get_input: location_id }
+                provider: { get_input: provider }
         relationships:
             - target: test_server_key
               type: cloudify.mist.relationships.server_connected_to_keypair
 
+
+    test_network_node:
+        type: cloudify.mist.nodes.Network
+        properties:
+            use_external_resource: { get_input: net_external_resource }
+            resource_id: { get_input: net_external_resource_id }
+            mist_config:
+                mist_uri: { get_input: mist_uri}
+                username: { get_input: username }
+                password: { get_input: password }
+                api_token: {get_input: api_token}
+            parameters:
+                cloud_id: { get_input: cloud_id }
+                network:
+                    name: { get_input: network_name }
+                    admin_state_up: true
+        relationships:
+            - target: test_server_node
+              type: cloudify.mist.relationships.server_connected_to_network
 
