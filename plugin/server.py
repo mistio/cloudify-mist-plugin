@@ -90,9 +90,10 @@ def create(**_):
     if ctx.node.properties['use_external_resource']:
         machine = mist_client.machine
         ctx.instance.runtime_properties["info"] = machine.info
-        ctx.instance.runtime_properties["ip"] = machine.info["public_ips"][0]
-        ctx.instance.runtime_properties["networks"] = machine.info["public_ips"]
-        ctx.instance.runtime_properties["mist_type"] = "machine"
+        if len(machine.info["public_ips"]):
+            ctx.instance.runtime_properties["ip"] = machine.info["public_ips"][0]
+            ctx.instance.runtime_properties["networks"] = machine.info["public_ips"]
+            ctx.instance.runtime_properties["mist_type"] = "machine"
 
         return
     try:
