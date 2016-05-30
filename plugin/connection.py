@@ -1,3 +1,5 @@
+from time import sleep
+
 from mistclient import MistClient
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
