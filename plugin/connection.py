@@ -85,10 +85,13 @@ class MistConnectionClient(object):
         if self.ctx:
             if ctx.instance.runtime_properties['machine_id']:
                 machines = []
-                i =0
+                i=0
                 while not machines and i < 10:
+                    print "trying to get machine"
                     machines = self.cloud.machines(id=ctx.instance.runtime_properties['machine_id'])
                     sleep(2)
+                    self.cloud.update_machines()
+                    i+=1
                 if machines:
                     return machines[0]
                 else:
