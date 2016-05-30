@@ -82,8 +82,17 @@ class MistConnectionClient(object):
 
         if self.ctx:
             if ctx.instance.runtime_properties['machine_id']:
+                machines = []
+                i =0
+                while not machines and i < 10:
+                    machines = self.cloud.machines(id=ctx.instance.runtime_properties['machine_id'])
+                    sleep(2)
+                if machines:
+                    return machines[0]
+                else:
+                    ctx.logger.error('failed to get machine with id %s' % ctx.instance.runtime_properties['machine_id'])
+                    print 'failed to get machine with id %s' % ctx.instance.runtime_properties['machine_id']
 
-                return self.cloud.machines(id=ctx.instance.runtime_properties['machine_id'])[0]
         machines = self.cloud.machines(search=self.properties['parameters']["name"])
         if len(machines) > 1:
             if self.ctx:
