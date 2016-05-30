@@ -65,7 +65,10 @@ def creation_validation(**_):
         if machines[0].info["state"] == "running":
             pass
         elif machines[0].info["state"] == "stopped":
-            machines[0].start()
+            try:
+                machines[0].start()
+            except:
+                pass
             delay = 0
             while True:
                 sleep(10)
