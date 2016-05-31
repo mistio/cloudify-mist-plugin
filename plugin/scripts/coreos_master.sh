@@ -429,6 +429,7 @@ EOF
           },
           {
             "args": [
+              "--kube_master_url=http://${ADVERTISE_IP}:8080",
               "--domain=cluster.local"
             ],
             "image": "gcr.io/google_containers/kube2sky:1.14",
