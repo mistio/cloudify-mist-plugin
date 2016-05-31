@@ -44,8 +44,8 @@ def scale_cluster_up(**kwargs):
                     "Machine with name {0} exists".format(machine_name))
 
     key = ""
-    if kwargs.get("key_name"):
-        key = client.keys(search=kwargs["key_name"])
+    if kwargs.get("key"):
+        key = client.keys(search=kwargs["key"])
         if len(key):
             key = key[0]
         else:
