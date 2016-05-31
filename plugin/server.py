@@ -124,8 +124,8 @@ def start(**_):
     try:
         connection.MistConnectionClient().machine.start()
     except Exception as exc:
-        raise Exception(exc)
-        # ctx.logger.info("Failed to start machine")
+        # raise Exception(exc)
+        ctx.logger.info("Failed to start machine")
         # print connection.MistConnectionClient().machine.info
     # if ctx.node.properties.get("monitoring"):
     #     connection.MistConnectionClient().machine.enable_monitoring()
