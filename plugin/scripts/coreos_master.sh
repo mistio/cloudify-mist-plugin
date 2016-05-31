@@ -228,7 +228,7 @@ systemctl daemon-reload
 curl -X PUT -d "value={\"Network\":\"$POD_NETWORK\",\"Backend\":{\"Type\":\"vxlan\"}}" "$ETCD_ENDPOINTS/v2/keys/coreos.com/network/config"
 
 # Pre-fetch rkt images
-rkt fetch quay.io/coreos/hyperkube:v1.1.8_coreos.0
+rkt fetch --trust-keys-from-https=true quay.io/coreos/hyperkube:v1.1.8_coreos.0
 # rkt fetch coreos.com/rkt/stage1-fly:1.1.0
 
 # Start kubelet and wait for it to do its job
