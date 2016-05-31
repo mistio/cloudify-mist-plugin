@@ -89,8 +89,14 @@ spec:
 EOF
 
 systemctl daemon-reload
+
+rkt fetch quay.io/coreos/hyperkube:v1.1.8_coreos.0
+rkt fetch coreos.com/rkt/stage1-fly:1.1.0
+
 systemctl start kubelet
 systemctl enable kubelet
 
 echo "REBOOT_STRATEGY=off" >> /etc/coreos/update.conf
 
+# Create kube-namespace
+curl -H "Content-Type: application/json" -XPOST -d'{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"kube-system"}}' "http://127.0.0.1:8080/api/v1/namespaces" | echo "Already done"

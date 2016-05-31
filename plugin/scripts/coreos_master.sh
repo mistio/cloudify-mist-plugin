@@ -227,6 +227,10 @@ systemctl daemon-reload
 # Configure flannel network
 curl -X PUT -d "value={\"Network\":\"$POD_NETWORK\",\"Backend\":{\"Type\":\"vxlan\"}}" "$ETCD_ENDPOINTS/v2/keys/coreos.com/network/config"
 
+# Pre-fetch rkt images
+rkt fetch quay.io/coreos/hyperkube:v1.1.8_coreos.0
+rkt fetch coreos.com/rkt/stage1-fly:1.1.0
+
 # Start kubelet and wait for it to do its job
 systemctl start kubelet
 systemctl enable kubelet
@@ -234,12 +238,12 @@ systemctl enable kubelet
 # Do not reboot-strategy
 echo "REBOOT_STRATEGY=off" >> /etc/coreos/update.conf
 echo "Sleeping for 60 seconds to let kubelet do its job"
-sleep 80
+sleep 100
 
 curl -H "Content-Type: application/json" -XPOST -d'{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"kube-system"}}' "http://127.0.0.1:8080/api/v1/namespaces" | echo "Not ready yet"
 
 echo "Sleeping for 60 seconds to let kubelet do its job"
-sleep 80
+sleep 100
 
 # Create kube-namespace
 curl -H "Content-Type: application/json" -XPOST -d'{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"kube-system"}}' "http://127.0.0.1:8080/api/v1/namespaces" | echo "Already done"
