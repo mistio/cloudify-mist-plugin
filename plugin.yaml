@@ -221,7 +221,6 @@ node_types:
   cloudify.mist.nodes.Network:
     derived_from: cloudify.nodes.Network
     properties:
-      install_agent: false
       use_external_resource:
         description: >
           Indicate whether the resource exists or if Cloudify should create the resource.
