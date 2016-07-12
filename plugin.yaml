@@ -121,7 +121,8 @@ node_types:
   cloudify.mist.nodes.KeyPair:
     derived_from: cloudify.nodes.Root
     properties:
-      install_agent: false
+      install_agent: 
+        default: false
       use_external_resource:
         description: >
           Indicate whether the resource exists or if Cloudify should create the resource.
@@ -163,7 +164,8 @@ node_types:
   cloudify.mist.nodes.Server:
     derived_from: cloudify.nodes.Compute
     properties:
-      install_agent: false
+      install_agent:
+        default: false
       use_external_resource:
         description: >
           Indicate whether the resource exists or if Cloudify should create the resource.
@@ -221,7 +223,8 @@ node_types:
   cloudify.mist.nodes.Network:
     derived_from: cloudify.nodes.Network
     properties:
-      install_agent: false
+      install_agent:
+        default: false
       use_external_resource:
         description: >
           Indicate whether the resource exists or if Cloudify should create the resource.
