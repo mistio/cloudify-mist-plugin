@@ -121,7 +121,7 @@ node_types:
   cloudify.mist.nodes.KeyPair:
     derived_from: cloudify.nodes.Root
     properties:
-#      install_agent: 
+#      install_agent:
 #        default: false
       use_external_resource:
         description: >
