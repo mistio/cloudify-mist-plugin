@@ -26,7 +26,7 @@ from cloudify.workflows import ctx as workctx
 @workflow
 def scale_cluster_up(**kwargs):
 
-    master = workctx.get_node("master")
+    master = workctx.get_node("kube_master")
     mist_client = connection.MistConnectionClient(properties=master.properties)
     client = mist_client.client
     cloud = mist_client.cloud
@@ -63,6 +63,7 @@ def scale_cluster_up(**kwargs):
                                   location_id=kwargs["location_id"],
                                   size_id=kwargs["size_id"], quantity=quantity,
                                   networks=networks)
+    
     job_id = job_id.json()["job_id"]
     job = client.get_job(job_id)
     timer = 0
@@ -95,8 +96,8 @@ def scale_cluster_up(**kwargs):
             name="install_docker" + kub_type + uuid.uuid1().hex, script=script,
             location_type="inline", exec_type="executable",
         )
-        script_id = response['script_id']
-        machine_id = kwargs['machine_id']
+        script_id = response['id']
+        machine_id = job['logs'][2]['machine_id']   # kwargs['machine_id']
         cloud_id = kwargs['cloud_id']
         job_id = client.run_script(script_id=script_id, cloud_id=cloud_id,
                                    machine_id=machine_id,
@@ -125,13 +126,14 @@ def scale_cluster_up(**kwargs):
         location_type="inline", exec_type="executable",
     )
     for m in xrange(quantity):
-        kwargs["name"] = machine_name + "-" + str(m + 1)
-        kwargs["machine_id"] = ""
+        machine_name += '-' + str(m + 1) if quantity > 1 else ''
+        kwargs["name"] = machine_name
+        kwargs["machine_id"] = ""  # ?
         machine = mist_client.other_machine(kwargs)
         kwargs["machine_id"] = machine.info["id"]
         workctx.logger.info('Machine created')
 
-        script_id = response['script_id']
+        script_id = response['id']
         machine_id = kwargs['machine_id']
         cloud_id = kwargs['cloud_id']
         script_params = "-m '{0}'".format(master_ip)
@@ -157,7 +159,7 @@ def scale_cluster_up(**kwargs):
 
 @workflow
 def scale_cluster_down(**kwargs):
-    master = workctx.get_node("master")
+    master = workctx.get_node("kube_master")
     mist_client = connection.MistConnectionClient(properties=master.properties)
     client = mist_client.client
     cloud = mist_client.cloud
@@ -173,8 +175,9 @@ def scale_cluster_down(**kwargs):
             continue
         counter += 1
         worker_priv_ip = m.info["private_ips"][0]
+        worker_selfLink = 'ip-' + str(worker_priv_ip).replace('.', '-')
         m.destroy()
-        requests.delete("http://%s:8080/api/v1/nodes/%s" % (master_ip, worker_priv_ip))
+        requests.delete("http://%s:8080/api/v1/nodes/%s" % (master_ip, worker_selfLink))
         if counter == delta:
             break
     workctx.logger.info("Downscaling kubernetes cluster succeeded")
@@ -217,7 +220,7 @@ def install_kubernetes(**kwargs):
             name="install_docker" + kub_type + uuid.uuid1().hex, script=script,
             location_type="inline", exec_type="executable",
         )
-        script_id = response['script_id']
+        script_id = response['id']
         machine_id = ctx.instance.runtime_properties['machine_id']
         cloud_id = ctx.node.properties['parameters']['cloud_id']
         job_id = client.run_script(script_id=script_id, cloud_id=cloud_id,
@@ -242,7 +245,7 @@ def install_kubernetes(**kwargs):
         script=install_script,
         location_type="inline", exec_type="executable",
     )
-    script_id = response['script_id']
+    script_id = response['id']
     machine_id = ctx.instance.runtime_properties['machine_id']
     cloud_id = ctx.node.properties['parameters']['cloud_id']
     if kub_type == "master":
