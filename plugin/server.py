@@ -87,7 +87,6 @@ def creation_validation(**_):
 @operation
 def create(**_):
     mist_client = connection.MistConnectionClient()
-    # client = mist_client.client
     cloud = mist_client.cloud
     params = ctx.node.properties['parameters']
     if ctx.node.properties['use_external_resource']:
@@ -101,8 +100,14 @@ def create(**_):
         return
     try:
         del params['cloud_id']
-        job = cloud.create_machine(async=True, verbose=True, fire_and_forget=False,
-                                   **params)
+        name = params.pop('name')
+        key = params.pop('key')
+        image_id = params.pop('image_id')
+        location_id = params.pop('location_id')
+        size_id = params.pop('size_id')
+        job = cloud.create_machine(name, key, image_id, location_id, size_id,
+                                   async=True, verbose=True,
+                                   fire_and_forget=False, **params)
         for log in job["logs"]:
             if log["action"] == 'machine_creation_finished':
                 ctx.instance.runtime_properties["machine_id"] = log["machine_id"]
@@ -124,20 +129,21 @@ def start(**_):
     try:
         connection.MistConnectionClient().machine.start()
     except Exception as exc:
-        # raise Exception(exc)
-        ctx.logger.info("Failed to start machine")
+        ctx.logger.error("Failed to start machine")
         # print connection.MistConnectionClient().machine.info
-    # if ctx.node.properties.get("monitoring"):
-    #     connection.MistConnectionClient().machine.enable_monitoring()
-    #     ctx.logger.info('Monitoring enabled')
+        # raise Exception(exc)
+    if ctx.node.properties.get("monitoring"):
+        connection.MistConnectionClient().machine.enable_monitoring()
+        ctx.logger.info('Monitoring enabled')
 
 
 @operation
 def stop(**_):
-
     try:
         connection.MistConnectionClient().machine.stop()
+        ctx.logger.info('Machine stopped')
     except Exception as exc:
+        ctx.logger.error("Failed to stop machine")
         raise Exception(exc)
     # connection.MistConnectionClient().machine.stop()
     # ctx.logger.info('Machine stopped')
