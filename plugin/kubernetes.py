@@ -52,7 +52,6 @@ def scale_cluster_up(**kwargs):
             raise NonRecoverableError("key not found")
     else:
         raise NonRecoverableError("key not found")
-    # print 'Key:', key
     if kwargs.get("networks"):
         networks = kwargs["networks"]
     else:
@@ -76,7 +75,7 @@ def scale_cluster_up(**kwargs):
         sleep(10)
         job = client.get_job(job_id)
         timer += 1
-        if timer >= 360:   # timeout 1hour
+        if timer >= 360: 
             raise NonRecoverableError("Timeout.Not able to create machine.")
 
     kub_type = "worker"
@@ -97,7 +96,7 @@ def scale_cluster_up(**kwargs):
             location_type="inline", exec_type="executable",
         )
         script_id = response['id']
-        machine_id = job['logs'][2]['machine_id']   # kwargs['machine_id']
+        machine_id = job['logs'][2]['machine_id']
         cloud_id = kwargs['cloud_id']
         job_id = client.run_script(script_id=script_id, cloud_id=cloud_id,
                                    machine_id=machine_id,
@@ -128,7 +127,6 @@ def scale_cluster_up(**kwargs):
     for m in xrange(quantity):
         machine_name += '-' + str(m + 1) if quantity > 1 else ''
         kwargs["name"] = machine_name
-        kwargs["machine_id"] = ""  # ?
         machine = mist_client.other_machine(kwargs)
         kwargs["machine_id"] = machine.info["id"]
         workctx.logger.info('Machine created')

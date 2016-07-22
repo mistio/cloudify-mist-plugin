@@ -120,7 +120,6 @@ def create(**_):
         ctx.instance.runtime_properties["ip"] = machine.info["public_ips"][0]
     ctx.instance.runtime_properties["networks"] = machine.info["public_ips"]
     ctx.instance.runtime_properties["mist_type"] = "machine"
-    # ctx.instance.runtime_properties["private_key_path"] = machine.info["public_ips"]
     ctx.logger.info('Machine created')
 
 
@@ -130,8 +129,6 @@ def start(**_):
         connection.MistConnectionClient().machine.start()
     except Exception as exc:
         ctx.logger.error("Failed to start machine")
-        # print connection.MistConnectionClient().machine.info
-        # raise Exception(exc)
     if ctx.node.properties.get("monitoring"):
         connection.MistConnectionClient().machine.enable_monitoring()
         ctx.logger.info('Monitoring enabled')
@@ -145,8 +142,6 @@ def stop(**_):
     except Exception as exc:
         ctx.logger.error("Failed to stop machine")
         raise Exception(exc)
-    # connection.MistConnectionClient().machine.stop()
-    # ctx.logger.info('Machine stopped')
 
 
 @operation
@@ -156,8 +151,6 @@ def delete(**_):
         connection.MistConnectionClient().machine.destroy()
     except Exception as exc:
         raise Exception(exc)
-    # connection.MistConnectionClient().machine.destroy()
-    # ctx.logger.info('Machine destroyed')
 
 
 @operation
@@ -166,20 +159,16 @@ def run_script(**kwargs):
     machine = connection.MistConnectionClient().machine
     script_params = kwargs.get("params","")
     if kwargs.get("script_id", ''):
-        # script_id = kwargs["script_id"]
         try:
             job_id = machine.run_script(**kwargs)
         except Exception as exc:
             raise NonRecoverableError(exc)
 
     else:
-        # script_id = response['script_id']
         try:
             response = client.add_and_run_script(machine.cloud.id, machine.id,
                                                  script_params=script_params,
                                                  fire_and_forget=False,
                                                  **kwargs)
-            # machine.run_script(script_id=script_id, script_params=script_params,
-            #                    fire_and_forget=False)
         except Exception as exc:
             raise NonRecoverableError(exc)
