@@ -213,7 +213,7 @@ def _get_path_to_key_file():
     :raises NonRecoverableError: If private_key_path is not set.
     """
 
-    if 'private_key_path' not in ctx.node.properties:
+    if not ctx.node.properties['private_key_path']:
          ctx.logger.error('No private_key_path supplied. Moving on...')
          return
 #        raise NonRecoverableError(
