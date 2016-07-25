@@ -256,8 +256,6 @@ node_types:
         delete:
           implementation: mist.plugin.network.delete
 
-# TODO: relationship to connect worker to master
-
 relationships:
   cloudify.mist.relationships.server_connected_to_keypair:
     derived_from: cloudify.relationships.connected_to

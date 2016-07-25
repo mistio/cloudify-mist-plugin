@@ -128,7 +128,7 @@ def start(**_):
     try:
         connection.MistConnectionClient().machine.start()
     except Exception as exc:
-        ctx.logger.error("Failed to start machine")
+        ctx.logger.error("Failed to start machine. Already running?")
     if ctx.node.properties.get("monitoring"):
         connection.MistConnectionClient().machine.enable_monitoring()
         ctx.logger.info('Monitoring enabled')
@@ -146,7 +146,6 @@ def stop(**_):
 
 @operation
 def delete(**_):
-
     try:
         connection.MistConnectionClient().machine.destroy()
     except Exception as exc:
@@ -157,13 +156,12 @@ def delete(**_):
 def run_script(**kwargs):
     client = connection.MistConnectionClient().client
     machine = connection.MistConnectionClient().machine
-    script_params = kwargs.get("params","")
+    script_params = kwargs.get("params", "")
     if kwargs.get("script_id", ''):
         try:
             job_id = machine.run_script(**kwargs)
         except Exception as exc:
             raise NonRecoverableError(exc)
-
     else:
         try:
             response = client.add_and_run_script(machine.cloud.id, machine.id,
