@@ -59,8 +59,9 @@ def create(**kwargs):
     kp = mist_client.keys(search=key_pair_name)
     if len(kp):
         kp = kp[0]
+        return  # if key already in mist.io, skip
     else:
-        key_pair_name = ctx.node.properties["key_name"]
+        key_pair_name = ctx.node.properties["key_name"]  # commented out in plugin?
         private = mist_client.generate_key()
         mist_client.add_key(key_name=key_pair_name, private=private)
         mist_client.update_keys()
