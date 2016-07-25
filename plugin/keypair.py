@@ -170,6 +170,8 @@ def _save_key_pair(key_pair_object):
             'Cannot save key. KeyPair contains no private key.')
 
     file_path = _get_path_to_key_file()
+    if not file_path:
+        return
     if os.path.exists(file_path):
         raise NonRecoverableError(
             '{0} already exists, it will not be overwritten.'.format(
@@ -211,9 +213,11 @@ def _get_path_to_key_file():
     """
 
     if 'private_key_path' not in ctx.node.properties:
-        raise NonRecoverableError(
-            'Unable to get key file path, private_key_path not set.')
-
+         ctx.logger.error('No private_key_path supplied. Moving on...')
+         return
+#        raise NonRecoverableError(
+#            'Unable to get key file path, private_key_path not set.')
+    
     return os.path.expanduser(ctx.node.properties['private_key_path'])
 
 
