@@ -91,7 +91,7 @@ def create(**_):
         client = mist_client.client
     except:
         raise NonRecoverableError('Credentials failed')
-    cloud = client.clouds(id=ctx.node.properties['cloud_id'])[0]
+    cloud = client.clouds(id=ctx.node.properties['parameters']['cloud_id'])[0]
     params = ctx.node.properties['parameters']
     if ctx.node.properties['use_external_resource']:
         machine = mist_client.machine
