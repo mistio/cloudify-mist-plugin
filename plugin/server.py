@@ -87,7 +87,7 @@ def creation_validation(**_):
 @operation
 def create(**_):
     mist_client = connection.MistConnectionClient()
-    cloud = mist_client.cloud
+    cloud = mist_client.clouds(id=ctx.node.properties['cloud_id'])[0]
     params = ctx.node.properties['parameters']
     if ctx.node.properties['use_external_resource']:
         machine = mist_client.machine
