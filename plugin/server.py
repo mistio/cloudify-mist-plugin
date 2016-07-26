@@ -123,7 +123,10 @@ def create(**_):
                 break
     except Exception as exc:
         raise NonRecoverableError(exc)
-    machine = mist_client.machine
+    machine_id = ctx.instance.runtime_properties['machine_id'] or \
+                ctx.node.properties['resource_id']
+    cloud.update_machines()
+    machine = cloud.machines(id=machine_id)[0]
     ctx.instance.runtime_properties["info"] = machine.info
     if len(machine.info["public_ips"]):
         ctx.instance.runtime_properties["ip"] = machine.info["public_ips"][0]
