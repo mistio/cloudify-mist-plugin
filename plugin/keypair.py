@@ -13,7 +13,6 @@ import connection
 def creation_validation(**_):
     """ This validates all nodes before bootstrap.
     """
-
     key_file = _get_path_to_key_file()
     key_file_in_filesystem = _search_for_key_file(key_file)
 
@@ -57,20 +56,17 @@ def create(**kwargs):
     ctx.instance.runtime_properties["mist_type"] = "keypair"
 
     ctx.logger.debug('Attempting to create key pair.')
-    kp=mist_client.keys(search=key_pair_name)
+    kp = mist_client.keys(search=key_pair_name)
     if len(kp):
         kp = kp[0]
+        return  # if key already in mist.io, skip
     else:
-        key_pair_name = ctx.node.properties["key_name"]
+        key_pair_name = ctx.node.properties["key_name"]  # commented out in plugin?
         private = mist_client.generate_key()
         mist_client.add_key(key_name=key_pair_name, private=private)
         mist_client.update_keys()
         kp = mist_client.keys(search=key_pair_name)[0]
 
-    # try:
-    # except:
-    #     raise NonRecoverableError('Key pair not created. ')
-    #     ctx.instance.runtime_properties["mist_resource_id"] = kp.id
     _save_key_pair(kp)
 
 
@@ -121,8 +117,6 @@ def _create_external_keypair():
     if not _search_for_key_file(key_path_in_filesystem):
         _save_key_pair(key_pair_in_account)
     ctx.instance.runtime_properties["key_id"] = key_pair_name
-        # raise NonRecoverableError(
-        #     'External resource, but the key file does not exist.')
     set_external_resource_id(key_pair_name)
     return True
 
@@ -177,6 +171,8 @@ def _save_key_pair(key_pair_object):
             'Cannot save key. KeyPair contains no private key.')
 
     file_path = _get_path_to_key_file()
+    if not file_path:
+        return
     if os.path.exists(file_path):
         raise NonRecoverableError(
             '{0} already exists, it will not be overwritten.'.format(
@@ -206,9 +202,6 @@ def _get_key_pair_by_id(key_pair_id):
     mist_client = connection.MistConnectionClient().client
 
     key_pairs = mist_client.keys(search=key_pair_id)
-    # try:
-    # except:
-    #     raise NonRecoverableError('key {0} not found'.format(key_pair_id))
 
     return key_pairs[0] if key_pairs else None
 
@@ -220,9 +213,11 @@ def _get_path_to_key_file():
     :raises NonRecoverableError: If private_key_path is not set.
     """
 
-    if 'private_key_path' not in ctx.node.properties:
-        raise NonRecoverableError(
-            'Unable to get key file path, private_key_path not set.')
+    if not ctx.node.properties['private_key_path']:
+        ctx.logger.error('No private_key_path supplied. Moving on...')
+        return
+#        raise NonRecoverableError(
+#            'Unable to get key file path, private_key_path not set.')
 
     return os.path.expanduser(ctx.node.properties['private_key_path'])
 
@@ -288,9 +283,11 @@ def unassign_runtime_property_from_resource(property_name):
 def is_external_resource(properties):
     return is_external_resource_by_properties(properties)
 
+
 def is_external_resource_by_properties(properties):
     return 'use_external_resource' in properties and \
         properties['use_external_resource']
+
 
 def use_external_resource(properties):
     if not properties.get('use_external_resource'):
@@ -302,7 +299,6 @@ def use_external_resource(properties):
     ctx.logger.debug(
         'Resource Id: {0}'.format(properties["resource_id"]))
     return True
-
 
 
 def set_external_resource_id(value):

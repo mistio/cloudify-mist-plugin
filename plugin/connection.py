@@ -20,6 +20,7 @@ class MistConnectionClient(object):
         else:
             self.properties = ctx.node.properties
             self.ctx = True
+
     @property
     def client(self):
         """Represents the MistConnection Client
@@ -31,15 +32,15 @@ class MistConnectionClient(object):
             else:
                 mist_uri = "https://mist.io"
                 verify = True
-            if self.properties['mist_config'].get("api_token"):
-                token = self.properties['mist_config']['api_token']
-                self._client = MistClient(mist_uri= mist_uri,
-                                          api_token= token,
+            if self.properties['mist_config'].get("mist_token"):
+                token = self.properties['mist_config']['mist_token']
+                self._client = MistClient(mist_uri=mist_uri,
+                                          api_token=token,
                                           verify=verify)
             else:
-                self._client = MistClient(mist_uri= mist_uri,
-                                          email=self.properties['mist_config']['username'],
-                                          password=self.properties['mist_config']['password'])
+                self._client = MistClient(mist_uri=mist_uri,
+                                          email=self.properties['mist_config']['mist_username'],
+                                          password=self.properties['mist_config']['mist_password'])
         return self._client
 
     @property
@@ -67,7 +68,7 @@ class MistConnectionClient(object):
         """Represents a Mist Machine
         """
         self.cloud.update_machines()
-        if self.properties.get('use_external_resource',''):
+        if self.properties.get('use_external_resource', ''):
             if self.ctx:
                 ctx.logger.info('use external resource enabled')
             if not self.properties["resource_id"]:
@@ -77,26 +78,27 @@ class MistConnectionClient(object):
             if not len(machines):
                 raise NonRecoverableError(
                     "External resource not found")
-            if machines[0].info["state"] in ["error","terminated"]:
+            if machines[0].info["state"] in ["error", "terminated"]:
                 raise NonRecoverableError(
                     "External resource state {0}".format(machines[0].info["state"]))
             return machines[0]
 
         if self.ctx:
-            if ctx.instance.runtime_properties['machine_id']:
+            machine_id = ctx.instance.runtime_properties['machine_id'] or \
+                ctx.node.properties['resource_id']
+            if machine_id:
+                ctx.logger.info('Retrieving machines\' list')
                 machines = []
-                i=0
+                i = 0
                 while not machines and i < 10:
-                    print "trying to get machine"
-                    machines = self.cloud.machines(id=ctx.instance.runtime_properties['machine_id'])
+                    machines = self.cloud.machines(id=machine_id)
                     sleep(2)
                     self.cloud.update_machines()
-                    i+=1
+                    i += 1
                 if machines:
                     return machines[0]
-                else:
-                    ctx.logger.error('failed to get machine with id %s' % ctx.instance.runtime_properties['machine_id'])
-                    print 'failed to get machine with id %s' % ctx.instance.runtime_properties['machine_id']
+                # else:
+                #     ctx.logger.error('failed to get machine with id %s' % machine_id)
 
         machines = self.cloud.machines(search=self.properties['parameters']["name"])
         if len(machines) > 1:
@@ -110,10 +112,18 @@ class MistConnectionClient(object):
             ctx.instance.runtime_properties['machine_id'] = machines[0].info["id"]
         return machines[0]
 
+    # FIXME
+    def destroy_machines(self, machines=[]):
+        for m in machines:
+            machine = self.cloud.machines(id=m)[0]
+            if machine.info['state'] == 'terminated':
+                continue
+            machine.destroy()
 
+    # FIXME
     def other_machine(self, kwargs):
         self.cloud.update_machines()
-        if kwargs.get('use_external_resource',''):
+        if kwargs.get('use_external_resource', ''):
             if not kwargs["resource_id"]:
                 raise NonRecoverableError(
                     "Cannot use external resource without defining resource_id")
@@ -121,7 +131,7 @@ class MistConnectionClient(object):
             if not len(machines):
                 raise NonRecoverableError(
                     "External resource not found")
-            if machines[0].info["state"] in ["error","terminated"]:
+            if machines[0].info["state"] in ["error", "terminated"]:
                 raise NonRecoverableError(
                     "External resource state {0}".format(machines[0].info["state"]))
             return machines[0]
@@ -129,7 +139,7 @@ class MistConnectionClient(object):
         machines = self.cloud.machines(search=kwargs["name"])
         if len(machines) > 1:
             for m in machines:
-                if m.info["state"] in ["running","stopped"]:
+                if m.info["state"] in ["running", "stopped"]:
                     machines[0] = m
                     break
         return machines[0]

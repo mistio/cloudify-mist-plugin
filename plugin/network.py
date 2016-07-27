@@ -4,7 +4,6 @@ from cloudify.exceptions import NonRecoverableError, RecoverableError
 import connection
 
 
-
 @operation
 def create(**_):
     params = ctx.node.properties['parameters']
@@ -16,21 +15,16 @@ def create(**_):
         ctx.instance.runtime_properties["info"] = network
     except Exception as exc:
         raise Exception(exc)
-    # connection.MistConnectionClient().machine.destroy()
-    # ctx.logger.info('Machine destroyed')
-
 
 
 @operation
 def delete(**_):
-
     try:
         network_id = ctx.instance.runtime_properties["info"]["id"]
         connection.MistConnectionClient().cloud.delete_network(network_id)
     except Exception as exc:
         raise Exception(exc)
-    # connection.MistConnectionClient().machine.destroy()
-    # ctx.logger.info('Machine destroyed')
+
 
 @operation
 def associate_network(**kwargs):
