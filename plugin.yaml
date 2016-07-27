@@ -9,13 +9,13 @@ plugins:
 data_types:
   cloudify.datatypes.mist.Config:
     properties:
-      username:
+      mist_username:
           description: an input for the test
           default: ''
-      password:
+      mist_password:
           description: an input for the test
           default: ''
-      api_token:
+      mist_token:
           description: an input for the test
           default: ''
       mist_uri:

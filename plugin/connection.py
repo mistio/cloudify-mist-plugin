@@ -32,15 +32,15 @@ class MistConnectionClient(object):
             else:
                 mist_uri = "https://mist.io"
                 verify = True
-            if self.properties['mist_config'].get("api_token"):
-                token = self.properties['mist_config']['api_token']
+            if self.properties['mist_config'].get("mist_token"):
+                token = self.properties['mist_config']['mist_token']
                 self._client = MistClient(mist_uri=mist_uri,
                                           api_token=token,
                                           verify=verify)
             else:
                 self._client = MistClient(mist_uri=mist_uri,
-                                          email=self.properties['mist_config']['username'],
-                                          password=self.properties['mist_config']['password'])
+                                          email=self.properties['mist_config']['mist_username'],
+                                          password=self.properties['mist_config']['mist_password'])
         return self._client
 
     @property
