@@ -113,9 +113,9 @@ class MistConnectionClient(object):
         return machines[0]
 
     # FIXME
-    def undeploy_minions(self, minions=[]):
-        for minion_id in minions:
-            machine = self.cloud.machines(id=minion_id)[0]
+    def destroy_machines(self, machines=[]):
+        for m in machines:
+            machine = self.cloud.machines(id=m)[0]
             if machine.info['state'] == 'terminated':
                 continue
             machine.destroy()
