@@ -115,8 +115,9 @@ class MistConnectionClient(object):
     # FIXME
     def destroy_machines(self, machines=[]):
         for m in machines:
-            machine = self.cloud.machines(id=m)[0]
-            if machine.info['state'] == 'terminated':
+            machines = self.cloud.machines(id=m)
+            machine = machines[0] if machines else None
+            if not machine or machine.info['state'] == 'terminated':
                 continue
             machine.destroy()
 
