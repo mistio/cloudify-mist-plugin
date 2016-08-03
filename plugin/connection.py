@@ -53,13 +53,13 @@ class MistConnectionClient(object):
                     id=self.properties['parameters']['cloud_id'])[0]
             elif self.properties['parameters'].get("cloud_name"):
                 cloud_search = self.client.clouds(search=self.properties['parameters'][
-                                                       'cloud_name'])
+                                                  'cloud_name'])
                 if len(cloud_search) > 1:
                     raise NonRecoverableError("Found more then one cloud with name {0}".format(
-                                                self.properties['parameters']['cloud_name']))
+                                              self.properties['parameters']['cloud_name']))
                 elif len(cloud_search) == 0:
                     raise NonRecoverableError("Did not find cloud with name {0}".format(
-                                                self.properties['parameters']['cloud_name']))
+                                              self.properties['parameters']['cloud_name']))
                 self._cloud = cloud_search[0]
         return self._cloud
 
@@ -111,15 +111,6 @@ class MistConnectionClient(object):
         if self.ctx:
             ctx.instance.runtime_properties['machine_id'] = machines[0].info["id"]
         return machines[0]
-
-    # FIXME
-    def destroy_machines(self, machines=[]):
-        for m in machines:
-            machines = self.cloud.machines(id=m)
-            machine = machines[0] if machines else None
-            if not machine or machine.info['state'] == 'terminated':
-                continue
-            machine.destroy()
 
     # FIXME
     def other_machine(self, kwargs):
