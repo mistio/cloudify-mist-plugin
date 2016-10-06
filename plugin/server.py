@@ -1,14 +1,18 @@
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError, RecoverableError
-from mistclient import MistClient
-from time import sleep
+
 import connection
-import constants
 import keypair
+import constants
+import utils
+
+from mistclient import MistClient
+
 import os
 import string
 import random
+from time import sleep
 
 
 @operation
@@ -54,34 +58,35 @@ def creation_validation(**_):
         raise NonRecoverableError(
             'location_id {0} not found.'.format(ctx.node.properties['location_id']))
 
-    machines = cloud[0].machines(search=ctx.node.properties["name"])
-    if ctx.node.properties['use_external_resource'] and not len(machines):
-        raise NonRecoverableError(
-            'machine {0} not found.'.format(ctx.node.properties["name"]))
-    if not ctx.node.properties['use_external_resource'] and len(machines):
-        raise NonRecoverableError(
-            'machine {0} exists.'.format(ctx.node.properties["name"]))
-    if ctx.node.properties['use_external_resource'] and len(machines):
-        if machines[0].info["state"] == "running":
-            pass
-        elif machines[0].info["state"] == "stopped":
-            try:
-                machines[0].start()
-            except:
+    machine_name = ctx.node.properties["name"]
+    if machine_name:
+        machines = cloud[0].machines(search=machine_name)
+        if ctx.node.properties['use_external_resource'] and not len(machines):
+            raise NonRecoverableError('Machine {0} not found.'.format(machine_name))
+        if not ctx.node.properties['use_external_resource'] and len(machines):
+            raise NonRecoverableError('Machine {0} exists.'.format(machine_name))
+        if ctx.node.properties['use_external_resource'] and len(machines):
+            if machines[0].info["state"] == "running":
                 pass
-            delay = 0
-            while True:
-                sleep(10)
-                cloud[0].update_machines()
-                if cloud[0].machines(search=ctx.node.properties["name"])[0].info["state"] == "running":
-                    break
-                elif delay == 5:
-                    raise NonRecoverableError(
-                        'machine {0} in stopped state.'.format(ctx.node.properties["name"]))
-                delay += 1
-        else:
-            raise NonRecoverableError(
-                'machine {0} error state.'.format(ctx.node.properties["name"]))
+            elif machines[0].info["state"] == "stopped":
+                try:
+                    machines[0].start()
+                except:
+                    pass
+                delay = 0
+                while True:
+                    sleep(10)
+                    cloud[0].update_machines()
+                    if cloud[0].machines(search=machine_name)[0].info["state"] == "running":
+                        break
+                    elif delay == 5:
+                        raise NonRecoverableError(
+                            'Machine {0} in stopped state.'.format(machine_name)
+                        )
+                    delay += 1
+            else:
+                raise NonRecoverableError(
+                    'Machine {0} error state.'.format(machine_name))
 
 
 @operation
@@ -104,7 +109,7 @@ def create(**_):
         return
     try:
         del params['cloud_id']
-        name = params.pop('name')
+        name = params.pop('name') or utils.generate_name()
         key = params.pop('key')
         image_id = params.pop('image_id')
         location_id = params.pop('location_id')

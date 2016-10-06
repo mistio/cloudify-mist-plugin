@@ -1,4 +1,8 @@
 import os
+
+import string
+from random import choice
+
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError, RecoverableError
@@ -21,4 +25,13 @@ def get_resource_id():
 
     return '{0}-{1}'.format(ctx.deployment.id, ctx.instance.id)
 
+
+def generate_name():
+    """
+    Generate a random name for a newly provisioned machine
+    """
+    def random_chars():
+        return ''.join(choice(string.letters + string.digits) for _ in range(4))
+
+    return 'MistCfyNode-%s-%s' % (random_chars(), random_chars())
 
