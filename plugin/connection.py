@@ -33,7 +33,7 @@ class MistConnectionClient(object):
                 with open('/tmp/cloudify-mist-plugin-job', 'r') as jf:
                     job_id = jf.read()
             except IOError as err:
-                ctx.logger.debuf(err)
+                ctx.logger.debug(err)
 
             if self.properties['mist_config'].get("mist_uri"):
                 mist_uri = self.properties['mist_config']["mist_uri"]
