@@ -111,6 +111,8 @@ def create(**_):
         ctx.logger.info('Creating machine...')
         del params['cloud_id']
         name = params.pop('name', '') or utils.generate_name()
+        ctx.logger.info('************** %s', params)
+        ctx.logger.info('************** %s', name)
         key = params.pop('key')
         image_id = params.pop('image_id')
         location_id = params.pop('location_id')
