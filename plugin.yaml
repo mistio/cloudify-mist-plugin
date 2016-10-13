@@ -71,8 +71,8 @@ data_types:
       provider:
           type: string
           default: ''
-      associate_floating_ip:
-          default: False
+      associate_floating_ip:  # TODO not used?
+          default: true
       # docker_exposed_ports:
       #     default: {}
       # docker_port_bindings:
@@ -254,6 +254,7 @@ node_types:
           implementation: mist.plugin.network.create
         delete:
           implementation: mist.plugin.network.delete
+
 
 relationships:
   cloudify.mist.relationships.server_connected_to_keypair:

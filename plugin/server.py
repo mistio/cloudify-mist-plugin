@@ -58,7 +58,8 @@ def creation_validation(**_):
         raise NonRecoverableError(
             'location_id {0} not found.'.format(ctx.node.properties['location_id']))
 
-    machine_name = ctx.node.properties["name"]
+    # FIXME this should not always raise a NonRecoverableError
+    machine_name = ctx.node.properties.get('name', '')
     if machine_name:
         machines = cloud[0].machines(search=machine_name)
         if ctx.node.properties['use_external_resource'] and not len(machines):
@@ -108,8 +109,9 @@ def create(**_):
 
         return
     try:
+        ctx.logger.info('Creating machine...')
         del params['cloud_id']
-        name = params.pop('name') or utils.generate_name()
+        name = params.pop('name', '') or utils.generate_name()
         key = params.pop('key')
         image_id = params.pop('image_id')
         location_id = params.pop('location_id')
@@ -157,7 +159,7 @@ def stop(**_):
         connection.MistConnectionClient().machine.stop()
         ctx.logger.info('Machine stopped')
     except Exception as exc:
-        ctx.logger.error("Failed to stop machine")
+        ctx.logger.error('Failed to stop machine. Already stopped?')
         raise Exception(exc)
 
 
