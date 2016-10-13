@@ -58,6 +58,7 @@ def creation_validation(**_):
         raise NonRecoverableError(
             'location_id {0} not found.'.format(ctx.node.properties['location_id']))
 
+    # FIXME this should not always raise a NonRecoverableError
     machine_name = ctx.node.properties.get('name', '')
     if machine_name:
         machines = cloud[0].machines(search=machine_name)
@@ -111,8 +112,6 @@ def create(**_):
         ctx.logger.info('Creating machine...')
         del params['cloud_id']
         name = params.pop('name', '') or utils.generate_name()
-        ctx.logger.info('************** %s', params)
-        ctx.logger.info('************** %s', name)
         key = params.pop('key')
         image_id = params.pop('image_id')
         location_id = params.pop('location_id')

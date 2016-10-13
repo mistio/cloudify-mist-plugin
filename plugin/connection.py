@@ -26,6 +26,15 @@ class MistConnectionClient(object):
         """Represents the MistConnection Client
         """
         if self._client is None:
+
+            # We are attempting to read the Stack's original job ID in order to
+            # create nested logs
+            try:
+                with open('/tmp/cloudify-mist-plugin-job', 'r') as jf:
+                    job_id = jf.read()
+            except IOError as err:
+                ctx.logger.debuf(err)
+
             if self.properties['mist_config'].get("mist_uri"):
                 mist_uri = self.properties['mist_config']["mist_uri"]
                 verify = False
@@ -36,11 +45,13 @@ class MistConnectionClient(object):
                 token = self.properties['mist_config']['mist_token']
                 self._client = MistClient(mist_uri=mist_uri,
                                           api_token=token,
-                                          verify=verify)
+                                          verify=verify,
+                                          job_id=job_id)
             else:
                 self._client = MistClient(mist_uri=mist_uri,
                                           email=self.properties['mist_config']['mist_username'],
-                                          password=self.properties['mist_config']['mist_password'])
+                                          password=self.properties['mist_config']['mist_password'],
+                                          job_id=job_id)
         return self._client
 
     @property
