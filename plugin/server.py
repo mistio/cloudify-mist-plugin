@@ -119,14 +119,16 @@ def create(**_):
         job = cloud.create_machine(name, key, image_id, location_id, size_id,
                                    async=True, verbose=True,
                                    fire_and_forget=False, **params)
-        params['name'] = name
-        params['key'] = key
-        params['image_id'] = image_id
-        params['location_id'] = location_id
-        params['size_id'] = size_id
-        for log in job["logs"]:
-            if log["action"] == 'machine_creation_finished':
-                ctx.instance.runtime_properties["machine_id"] = log["machine_id"]
+#        params['name'] = name
+#        params['key'] = key
+#        params['image_id'] = image_id
+#        params['location_id'] = location_id
+#        params['size_id'] = size_id
+        for log in job['logs']:
+            if log['action'] == 'machine_creation_finished' and \
+                log['machine_name'] == name:
+                ctx.instance.runtime_properties['machine_id'] = log['machine_id'
+                                                                   ]
                 break
     except Exception as exc:
         raise NonRecoverableError(exc)
