@@ -141,6 +141,7 @@ class MistConnectionClient(object):
             return machines[0]
 
         machines = self.cloud.machines(search=kwargs["name"])
+        ctx.logger.info('********** GOT MACHINES: %s', machines)
         if len(machines) > 1:
             for m in machines:
                 if m.info["state"] in ["running", "stopped"]:
