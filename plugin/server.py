@@ -117,13 +117,7 @@ def create(**_):
         location_id = params.pop('location_id')
         size_id = params.pop('size_id')
         job = cloud.create_machine(name, key, image_id, location_id, size_id,
-                                   async=True, verbose=True,
-                                   fire_and_forget=False, **params)
-#        params['name'] = name
-#        params['key'] = key
-#        params['image_id'] = image_id
-#        params['location_id'] = location_id
-#        params['size_id'] = size_id
+                                   async=True, fire_and_forget=False, **params)
         for log in job['logs']:
             if log['action'] == 'machine_creation_finished' and \
                 log['machine_name'] == name:
