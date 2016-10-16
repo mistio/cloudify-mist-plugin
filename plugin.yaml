@@ -3,7 +3,7 @@ tosca_definitions_version: cloudify_dsl_1_2
 plugins:
   mist:
     executor: central_deployment_agent
-    source: "https://github.com/mistio/cloudify-mist-plugin/archive/webinar_fixes.zip"  # TODO
+    source: "https://github.com/mistio/cloudify-mist-plugin/archive/master.zip"
 
 data_types:
   cloudify.datatypes.mist.Config:
