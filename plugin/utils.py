@@ -18,11 +18,22 @@ class LocalStorage(object):
     """
     LocalStorage gives full access to a node instance's properties by reading
     the instance object directly from file
+
+    This class is meant to be called as such:
+
+        node_instance = LocalStorage.get('kube_master')
+
+    where `kube_master` is the actual node_instance as defined in the
+    respective blueprint. In order to access the runtime properties simply call:
+
+        node_instance.runtime_properties
+
+    which will return the dict of all of the instance's runtime properties
     """
     def __init__(self, node):
         """
         Searches in local-storage for the file that corresponds to the node
-        provided
+        instance provided
         """
         instance_file = self.fetch_instance_file(node)
         with open(instance_file, 'r') as _instance:
