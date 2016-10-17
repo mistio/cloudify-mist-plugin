@@ -1,11 +1,9 @@
-
-# Built-in Imports
-import os
-
-
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify.decorators import operation
+
+import os
+
 import connection
 
 

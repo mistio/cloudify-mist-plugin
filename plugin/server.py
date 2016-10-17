@@ -155,8 +155,7 @@ def stop(**_):
         connection.MistConnectionClient().machine.stop()
         ctx.logger.info('Machine stopped')
     except Exception as exc:
-        ctx.logger.error('Failed to stop machine. Already stopped?')
-        raise Exception(exc)
+        ctx.logger.error('Failed to stop machine. Is \'stop\' supported?')
 
 
 @operation
