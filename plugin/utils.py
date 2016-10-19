@@ -106,3 +106,16 @@ def random_string(length=6):
     _chars = string.letters + string.digits
     return ''.join(random.choice(_chars) for _ in range(length))
 
+
+def get_job_id():
+    """
+    Read the Stack's original job ID from file in order to create nested logs
+    """
+    try:
+        with open('/tmp/cloudify-mist-plugin-job', 'r') as jf:
+            job_id = jf.read()
+    except IOError as err:
+        job_id = ''
+        ctx.logger.debug(err)
+    return job_id
+
