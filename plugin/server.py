@@ -121,8 +121,8 @@ def create(**_):
         for log in job['logs']:
             if log['action'] == 'machine_creation_finished' and log[
                                                      'machine_name'] == name:
-                if log.get('error'):
-                    raise Exception(log['error'])
+                ctx.logger.info('+++++++++++++++++++++')
+                ctx.logger.infno(log)
                 ctx.instance.runtime_properties[
                     'machine_id'] = log['machine_id']
                 break
