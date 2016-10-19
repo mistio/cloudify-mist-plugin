@@ -86,7 +86,7 @@ def delete(**kwargs):
         _delete_key_file()
         ctx.logger.info('Deleted key pair: {0}'.format(key_pair_name))
     else:
-        ctx.logger.debug('Not deleting key pair from account')
+        ctx.logger.info('Not deleting key pair from account')
 
 
 def _create_external_keypair():
