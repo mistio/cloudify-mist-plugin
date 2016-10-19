@@ -53,7 +53,6 @@ def create(**kwargs):
     ctx.instance.runtime_properties["key"] = key_pair_name
     ctx.instance.runtime_properties["mist_type"] = "keypair"
 
-    ctx.logger.debug('Attempting to create key pair.')
     kp = mist_client.keys(search=key_pair_name)
     if len(kp):
         kp = kp[0]
@@ -71,25 +70,23 @@ def create(**kwargs):
 @operation
 def delete(**kwargs):
     """Deletes a keypair."""
-
     mist_client = connection.MistConnectionClient().client
 
-    key_pair_name = get_external_resource_id_or_raise(
-        'delete key pair')
+    key_pair_name = get_external_resource_id_or_raise('delete key pair')
 
     if _delete_external_keypair():
         return
 
-    ctx.logger.debug('Attempting to delete key pair from account.')
-
-    try:
-        mist_client.keys(search=key_pair_name)[0].delete()
-    except e:
-        raise NonRecoverableError('{0}'.format(str(e)))
-
-    unassign_runtime_property_from_resource('mist_resource_id')
-    _delete_key_file()
-    ctx.logger.info('Deleted key pair: {0}.'.format(key_pair_name))
+    if key_pair_name:
+        try:
+            mist_client.keys(search=key_pair_name)[0].delete()
+        except Exception as exc:
+            raise NonRecoverableError('{0}'.format(str(exc)))
+        unassign_runtime_property_from_resource('mist_resource_id')
+        _delete_key_file()
+        ctx.logger.info('Deleted key pair: {0}'.format(key_pair_name))
+    else:
+        ctx.logger.info('Not deleting key pair from account')
 
 
 def _create_external_keypair():
@@ -100,7 +97,6 @@ def _create_external_keypair():
     :return True: External resource. Set runtime_properties. Ignore operation.
     :raises NonRecoverableError: If unable to locate the existing key file.
     """
-    print "create external keypair"
     if not use_external_resource(ctx.node.properties):
         return False
     ctx.instance.runtime_properties["mist_type"] = "keypair"
@@ -238,7 +234,7 @@ def get_resource_id():
 
     if ctx.node.properties['resource_id']:
         return ctx.node.properties['resource_id']
-    elif 'private_key_path' in ctx.node.properties:
+    elif ctx.node.properties['private_key_path']:
         directory_path, filename = \
             os.path.split(ctx.node.properties['private_key_path'])
         resource_id = filename.split('.')[0]
@@ -259,9 +255,9 @@ def get_external_resource_id_or_raise(operation):
         .format("mist_resource_id", operation))
 
     if "mist_resource_id" not in ctx.instance.runtime_properties:
-        raise NonRecoverableError(
-            'Cannot {0} because {1} is not assigned.'
-            .format(operation, "mist_resource_id"))
+        ctx.logger.error('Cannot {0}, because {1} is not assigned.'.format(
+            operation, "mist_resource_id"))
+        return
 
     return ctx.instance.runtime_properties["mist_resource_id"]
 

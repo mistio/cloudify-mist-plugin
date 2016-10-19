@@ -119,10 +119,10 @@ def create(**_):
         job = cloud.create_machine(name, key, image_id, location_id, size_id,
                                    async=True, fire_and_forget=False, **params)
         for log in job['logs']:
-            if log['action'] == 'machine_creation_finished' and \
-                log['machine_name'] == name:
-                ctx.instance.runtime_properties['machine_id'] = log['machine_id'
-                                                                   ]
+            if log['action'] == 'machine_creation_finished' and log[
+                                                     'machine_name'] == name:
+                ctx.instance.runtime_properties[
+                    'machine_id'] = log['machine_id']
                 break
     except Exception as exc:
         raise NonRecoverableError(exc)
