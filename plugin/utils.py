@@ -98,7 +98,8 @@ def get_resource_id():
 
 def generate_name(length=4):
     """Generate a random name for a newly provisioned machine"""
-    return 'mistcfynode-%s-%s' % (random_string(length), random_string(length)).lower()
+    ret = 'mistcfynode-%s-%s' % (random_string(length), random_string(length))
+    return ret.lower()
 
 
 def random_string(length=6):
