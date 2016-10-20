@@ -3,7 +3,7 @@ from cloudify.exceptions import NonRecoverableError
 
 from mistclient import MistClient
 
-from utils import get_job_id()
+from utils import get_job_id
 
 from time import sleep
 
