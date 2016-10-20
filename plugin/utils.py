@@ -1,15 +1,13 @@
 from cloudify import ctx
-from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError, RecoverableError
 
 import os
 import glob
 import json
 
+from uuid import uuid4
+
 import string
 import random
-
-from mistclient import MistClient
 
 from constants import STORAGE
 
@@ -52,8 +50,7 @@ class LocalStorage(object):
     @property
     def runtime_properties(self):
         """
-        Returns the node instance's runtime properties in a way similiar to
-        `ctx`
+        Returns the node instance's runtime properties
         """
         return self.instance_from_file['runtime_properties']
 
@@ -96,12 +93,12 @@ def get_resource_id():
     return '{0}-{1}'.format(ctx.deployment.id, ctx.instance.id)
 
 
-def generate_name(length=4):
+def generate_name(stack, role):
     """Generate a random name for a newly provisioned machine"""
-    return 'MistCfyNode-%s-%s' % (random_string(length), random_string(length))
+    return '%s-%s-%s' % (stack.lower(), role, random_string())
 
 
-def random_string(length=6):
+def random_string(length=4):
     """Generate a random alphanumeric string. Default length is set to 4"""
     _chars = string.letters + string.digits
     return ''.join(random.choice(_chars) for _ in range(length))
@@ -115,7 +112,23 @@ def get_job_id():
         with open('/tmp/cloudify-mist-plugin-job', 'r') as jf:
             job_id = jf.read()
     except IOError as err:
-        job_id = ''
         ctx.logger.debug(err)
+        job_id = ''
     return job_id
+
+
+def get_stack_name():
+    """
+    Read the Stack's name from file. If not found, generate one at random
+    """
+    try:
+        with open('/tmp/cloudify-mist-plugin-stack', 'r') as sf:
+            stack_name = sf.read()
+        stack_name = stack_name.replace(' ', '-')
+    except IOError as err:
+        ctx.logger.debug(err)
+        stack_name = 'stack-%s' % ctx.deployment.id  # TODO in runtime_properties
+        with open('/tmp/cloudify-mist-plugin-stack', 'w') as sf:
+            sf.write(stack_name)
+    return stack_name
 
