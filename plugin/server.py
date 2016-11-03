@@ -142,7 +142,7 @@ def create(**kwargs):
     ctx.instance.runtime_properties['info'] = machine.info
     public_ips = machine.info.get('public_ips', [])
     # Filter out IPv6 addresses
-    public ips = filter(lambda ip: ':' not in ip, public_ips)
+    public_ips = filter(lambda ip: ':' not in ip, public_ips)
     if public_ips:
         ctx.instance.runtime_properties['ip'] = public_ips[0]
         ctx.instance.runtime_properties['networks'] = public_ips
