@@ -3,9 +3,6 @@ from cloudify import ctx
 import os
 import glob
 import json
-
-from uuid import uuid4
-
 import string
 import random
 
