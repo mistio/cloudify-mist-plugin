@@ -12,6 +12,7 @@ from mistclient import MistClient
 import os
 import string
 import random
+
 from time import sleep
 
 
@@ -91,27 +92,33 @@ def creation_validation(**_):
 
 
 @operation
-def create(**_):
+def create(**kwargs):
+    stack_name = utils.get_stack_name()
+    node_type = kwargs.get('node_type', 'instance')
+
     mist_client = connection.MistConnectionClient()
     try:
         client = mist_client.client
     except:
-        raise NonRecoverableError('Credentials failed')
-    cloud = client.clouds(id=ctx.node.properties['parameters']['cloud_id'])[0]
+        raise NonRecoverableError('User authentication failed')
+
     params = ctx.node.properties['parameters']
+    cloud_id = params.pop('cloud_id')
+    cloud = client.clouds(id=cloud_id)[0]
+
     if ctx.node.properties['use_external_resource']:
         machine = mist_client.machine
-        ctx.instance.runtime_properties["info"] = machine.info
-        if len(machine.info["public_ips"]):
-            ctx.instance.runtime_properties["ip"] = machine.info["public_ips"][0]
-            ctx.instance.runtime_properties["networks"] = machine.info["public_ips"]
-            ctx.instance.runtime_properties["mist_type"] = "machine"
-
+        ctx.instance.runtime_properties['mist_type'] = 'machine'
+        ctx.instance.runtime_properties['info'] = machine.info
+        public_ips = machine.info.get('public_ips', [])
+        if public_ips:
+            ctx.instance.runtime_properties['ip'] = public_ips[0]
+            ctx.instance.runtime_properties['networks'] = public_ips
         return
+
     try:
-        ctx.logger.info('Creating machine...')
-        del params['cloud_id']
-        name = params.pop('name', '') or utils.generate_name()
+        name = params.pop('name', '') or utils.generate_name(stack_name,
+                                                             node_type)
         key = params.pop('key')
         image_id = params.pop('image_id')
         location_id = params.pop('location_id')
@@ -126,16 +133,19 @@ def create(**_):
                 break
     except Exception as exc:
         raise NonRecoverableError(exc)
-    machine_id = ctx.instance.runtime_properties['machine_id'] or \
-                ctx.node.properties['resource_id']
+
+    machine_id = ctx.instance.runtime_properties[
+        'machine_id'] or ctx.node.properties['resource_id']
     cloud.update_machines()
     machine = cloud.machines(id=machine_id)[0]
-    ctx.instance.runtime_properties["info"] = machine.info
-    if len(machine.info["public_ips"]):
-        ctx.instance.runtime_properties["ip"] = machine.info["public_ips"][0]
-    ctx.instance.runtime_properties["networks"] = machine.info["public_ips"]
-    ctx.instance.runtime_properties["mist_type"] = "machine"
-    ctx.logger.info('Machine created')
+    ctx.instance.runtime_properties['mist_type'] = 'machine'
+    ctx.instance.runtime_properties['info'] = machine.info
+    public_ips = machine.info.get('public_ips', [])
+    # Filter out IPv6 addresses
+    public_ips = filter(lambda ip: ':' not in ip, public_ips)
+    if public_ips:
+        ctx.instance.runtime_properties['ip'] = public_ips[0]
+        ctx.instance.runtime_properties['networks'] = public_ips
 
 
 @operation
