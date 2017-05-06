@@ -73,6 +73,8 @@ data_types:
           default: ''
       associate_floating_ip:  # TODO not used?
           default: true
+      tags:
+          default: {}
       # docker_exposed_ports:
       #     default: {}
       # docker_port_bindings:
