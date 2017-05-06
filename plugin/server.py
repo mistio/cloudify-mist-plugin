@@ -138,6 +138,7 @@ def create(**kwargs):
         'machine_id'] or ctx.node.properties['resource_id']
     cloud.update_machines()
     machine = cloud.machines(id=machine_id)[0]
+    ctx.instance.runtime_properties['cloud_id'] = cloud_id
     ctx.instance.runtime_properties['mist_type'] = 'machine'
     ctx.instance.runtime_properties['info'] = machine.info
     public_ips = machine.info.get('public_ips', [])
