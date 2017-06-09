@@ -1,7 +1,8 @@
+from plugin import connection
+
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError, RecoverableError
-import connection
 
 
 @operation

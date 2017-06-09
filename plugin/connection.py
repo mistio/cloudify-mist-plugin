@@ -1,11 +1,10 @@
-from cloudify import ctx
-from cloudify.exceptions import NonRecoverableError
+from time import sleep
 
 from mistclient import MistClient
+from plugin.utils import get_job_id
 
-from utils import get_job_id
-
-from time import sleep
+from cloudify import ctx
+from cloudify.exceptions import NonRecoverableError
 
 
 class MistConnectionClient(object):
