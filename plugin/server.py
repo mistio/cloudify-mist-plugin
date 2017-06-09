@@ -1,19 +1,18 @@
-from cloudify import ctx
-from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError, RecoverableError
-
-import connection
-import keypair
-import constants
-import utils
-
-from mistclient import MistClient
-
 import os
+import time
 import string
 import random
 
-from time import sleep
+from plugin import utils
+from plugin import keypair
+from plugin import constants
+from plugin import connection
+
+from mistclient import MistClient
+
+from cloudify import ctx
+from cloudify.decorators import operation
+from cloudify.exceptions import NonRecoverableError, RecoverableError
 
 
 @operation
@@ -77,7 +76,7 @@ def creation_validation(**_):
                     pass
                 delay = 0
                 while True:
-                    sleep(10)
+                    time.sleep(10)
                     cloud[0].update_machines()
                     if cloud[0].machines(search=machine_name)[0].info["state"] == "running":
                         break
