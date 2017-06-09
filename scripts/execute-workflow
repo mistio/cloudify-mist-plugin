@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env /home/cloudify/bin/python
 
 """Execute a Cloudify Workflow on a Mist.io Stack.
 
@@ -123,7 +123,7 @@ def main():
         f = open("inputs.json", "wb")
         f.write(json.dumps(inputs['install']))
         f.close()
-        cmd = 'cfy local init -p {0} -i inputs.json'.format(path)
+        cmd = 'cfy local init --install-plugins -p {0} -i inputs.json'.format(path)
         local_instances = os.path.join(folder,
                                        "local-storage/local/node-instances")
         cmdret.append(shellcmd(cmd, break_on_error=False))
