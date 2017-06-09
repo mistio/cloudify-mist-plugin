@@ -20,7 +20,7 @@ build_cloudify_mist_plugin_image_branch:
   except:
     - master
   before_script:
-    - TAG=$CI_COMMIT_REF_NAME
+    - TAG=$CI_COMMIT_REF_SLUG
 
 build_cloudify_mist_plugin_image_latest:
   <<: *build_cloudify_mist_plugin_image
