@@ -1,0 +1,30 @@
+stages:
+  - build
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                 BUILD STAGE                                 #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+.build_cloudify_mist_plugin_image: &build_cloudify_mist_plugin_image
+  stage: build
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  script:
+    - docker build --rm -t mist/cloudify-mist-plugin:$TAG .
+    - docker push mist/cloudify-mist-plugin:$TAG
+  tags:
+    - builder
+
+build_cloudify_mist_plugin_image_branch:
+  <<: *build_cloudify_mist_plugin_image
+  except:
+    - master
+  before_script:
+    - TAG=$CI_COMMIT_REF_NAME
+
+build_cloudify_mist_plugin_image_latest:
+  <<: *build_cloudify_mist_plugin_image
+  only:
+    - master
+  before_script:
+    - TAG=latest
