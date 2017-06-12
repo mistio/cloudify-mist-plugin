@@ -1,12 +1,12 @@
-from cloudify import ctx
-
 import os
 import glob
 import json
 import string
 import random
 
-from constants import STORAGE
+from cloudify import ctx
+
+from plugin.constants import STORAGE
 
 
 class LocalStorage(object):

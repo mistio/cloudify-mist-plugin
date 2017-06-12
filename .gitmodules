@@ -1,0 +1,3 @@
+[submodule "plugin/mist.client"]
+	path = plugin/mist.client
+	url = ../../mistio/mist.client.git
