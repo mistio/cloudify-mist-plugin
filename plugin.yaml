@@ -75,47 +75,6 @@ data_types:
           default: true
       tags:
           default: {}
-      # docker_exposed_ports:
-      #     default: {}
-      # docker_port_bindings:
-      #     default: {}
-      # hostname:
-      #     type: string
-      #     default: ''
-      # image_id:
-      #     type: string
-      #     default: ''
-      # image_name:
-      #     type: string
-      #     default: ''
-      # key_id:
-      #     type: string
-      # machine_name:
-      #     type: string
-      #     default: ''
-      # plugins:
-      #     default: []
-      # post_script_id:
-      #     type: string
-      #     default: ''
-      # post_script_params:
-      #     type: string
-      #     default: ''
-      # project_id:
-      #     type: string
-      #     default: ''
-      # quantity:
-      #     type: integer
-      #     default: 1
-      # size_name:
-      #     type: string
-      #     default: ''
-      # softlayer_backend_vlan_id:
-      #     type: string
-      #     default: ''
-      # ssh_port:
-      #     type: integer
-      #     default: 22
 
 
 node_types:
@@ -142,9 +101,6 @@ node_types:
           this will be saved on the manager.
         type: string
         default: ''
-      # key_name:
-      #   description: Enter the name of the key to be created if not using external resource.
-      #   default: ''
       parameters:
         description: >
           The key value pair parameters required by Mist Client to use
