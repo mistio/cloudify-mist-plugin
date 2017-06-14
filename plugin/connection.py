@@ -101,8 +101,6 @@ class MistConnectionClient(object):
                     i += 1
                 if machines:
                     return machines[0]
-                # else:
-                #     ctx.logger.error('failed to get machine with id %s' % machine_id)
 
         machines = self.cloud.machines(search=self.properties['parameters']["name"])
         if len(machines) > 1:

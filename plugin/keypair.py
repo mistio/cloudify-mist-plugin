@@ -210,8 +210,6 @@ def _get_path_to_key_file():
     if not ctx.node.properties['private_key_path']:
         ctx.logger.error('No private_key_path supplied. Moving on...')
         return
-#        raise NonRecoverableError(
-#            'Unable to get key file path, private_key_path not set.')
 
     return os.path.expanduser(ctx.node.properties['private_key_path'])
 
