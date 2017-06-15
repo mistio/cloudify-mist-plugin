@@ -9,71 +9,116 @@ data_types:
   cloudify.datatypes.mist.Config:
     properties:
       mist_username:
-          description: an input for the test
+          description: >
+            A mist.io username
+          type: string
           default: ''
       mist_password:
-          description: an input for the test
+          description: >
+            A mist.io password
+          type: string
           default: ''
       mist_token:
-          description: an input for the test
+          description: >
+            A mist.io authentication token
+          type: string
           default: ''
       mist_uri:
+          description: >
+            The mist.io URL
           type: string
           default: https://mist.io
   cloudify.datatypes.mist.MachineParams:
     properties:
       cloud_id:
+          description: >
+            The cloud id where the machine will be created
           type: string
           default: ''
       name:
+          description: >
+            The name for the machine created
           type: string
           default: ''
       key:
+          description: >
+            An ssh to connect to the machine created
           type: string
           default: ''
       image_id:
+          description: >
+            The id of the image for this machine
           type: string
           default: ''
       size_id:
+          description: >
+            The size of the machine
           type: string
           default: ''
       location_id:
+          descsription: >
+            The id for the location of this machine
           type: string
           default: ''
       location_name:
+          descsription: >
+            The name of the location of this machine
           type: string
           default: ''
       image_extra:
+          description: >
+            Image specific extra details
           type: string
           default: ''
       disk:
+          description: >
+            The disk that this machine will have
           type: string
           default: ''
       script:
+          description: >
+            Provide an inline script to run against the machine
           type: string
           default: ''
       monitoring:
+          description: >
+            Enable monitoring on this machine
           type: boolean
           default: false
       ips:
+          description: >
+            A list of IPs to assign to this machine
           default: []
       networks:
+          description: >
+            A list of networks that this machine belongs to
           default: []
       docker_command:
+          desciption: >
+            Run a docker command 
           type: string
           default: ''
       script_id:
+          description: >
+            The id of the script to run against this machine
           type: string
           default: ''
       script_params:
+          description: >
+            The params for the script 
           type: string
           default: ''
       provider:
+          description: >
+            The provider where this machine will be created
           type: string
           default: ''
-      associate_floating_ip:  # TODO not used?
+      # This is only used in OpenStack clouds
+      associate_floating_ip:
+          type: boolean
           default: true
       tags:
+          description: A set of tags to assign to this machine
           default: {}
 
 
@@ -82,6 +127,9 @@ node_types:
     derived_from: cloudify.nodes.Root
     properties:
       install_agent:
+        description: >
+          Indicates whether or not to install a Cloudify Agent on this host.
+        type: boolean
         default: false
       use_external_resource:
         description: >
@@ -122,6 +170,9 @@ node_types:
     derived_from: cloudify.nodes.Compute
     properties:
       install_agent:
+        description: >
+          Indicates whether or not to install a Cloudify Agent on this host.
+        type: boolean
         default: false
       use_external_resource:
         description: >
@@ -150,8 +201,13 @@ node_types:
           implementation: mist.plugin.server.create
           inputs:
             use_external_resource:
+              description: >
+                Indicate whether the resource exists or if Cloudify should create the resource.
+              type: boolean
               default: false
             mist_config:
+              description: >
+                A dictionary of values to pass to authenticate with the Mist API.
               default: {}
         start:
           implementation: mist.plugin.server.start
@@ -164,11 +220,15 @@ node_types:
           implementation: mist.plugin.server.stop
           inputs:
             mist_config:
+              description: >
+                A dictionary of values to pass to authenticate with the Mist API.
               default: {}
         delete:
           implementation: mist.plugin.server.delete
           inputs:
             mist_config:
+              description: >
+                A dictionary of values to pass to authenticate with the Mist API.
               default: {}
       cloudify.interfaces.validation:
         creation:
@@ -181,6 +241,9 @@ node_types:
     derived_from: cloudify.nodes.Network
     properties:
       install_agent:
+        description: >
+          Indicates whether or not to install a Cloudify Agent on this host.
+        type: boolean
         default: false
       use_external_resource:
         description: >
@@ -217,6 +280,7 @@ node_types:
 relationships:
   cloudify.mist.relationships.server_connected_to_keypair:
     derived_from: cloudify.relationships.connected_to
+  # TODO: This needs to be implemented
   cloudify.mist.relationships.server_connected_to_network:
     derived_from: cloudify.relationships.depends_on
     target_interfaces:
@@ -225,6 +289,10 @@ relationships:
           implementation: mist.plugin.network.associate_network
           inputs:
             ip:
+              description: The IP to associate to this node
+              type: string
               default: ''
             assign:
+              description: Indicate whether to associate this node to an IP
+              type: boolean
               default: true
