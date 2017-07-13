@@ -102,7 +102,7 @@ def create(**kwargs):
         raise NonRecoverableError('User authentication failed')
 
     params = ctx.node.properties['parameters']
-    cloud_id = params.pop('cloud_id')
+    cloud_id = params.get('cloud_id')
     cloud = client.clouds(id=cloud_id)[0]
 
     if ctx.node.properties['use_external_resource']:
@@ -116,6 +116,7 @@ def create(**kwargs):
         return
 
     try:
+        params.pop('cloud_id')
         name = params.pop('name', '') or utils.generate_name(stack_name,
                                                              node_type)
         key = params.pop('key')
