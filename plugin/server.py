@@ -182,7 +182,7 @@ def run_script(**kwargs):
     client = connection.MistConnectionClient().client
     machine = connection.MistConnectionClient().machine
     kwargs['cloud_id'] = machine.cloud.id
-    script_params = kwargs.get("params", "")
+    script_params = kwargs.pop("params", "")
     kwargs.pop('ctx', None)
     print "kwargs: %s" % kwargs
     print "done"
