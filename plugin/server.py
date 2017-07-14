@@ -182,9 +182,10 @@ def run_script(**kwargs):
     client = connection.MistConnectionClient().client
     machine = connection.MistConnectionClient().machine
     script_params = kwargs.get("params", "")
+    print "kwargs: %s" % kwargs
     if kwargs.get("script_id", ''):
         try:
-            job_id = machine.run_script(**kwargs)
+            job_id = client.run_script(**kwargs)
         except Exception as exc:
             raise NonRecoverableError(exc)
     else:
