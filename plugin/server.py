@@ -183,6 +183,7 @@ def run_script(**kwargs):
     machine = connection.MistConnectionClient().machine
     script_params = kwargs.get("params", "")
     print "kwargs: %s" % kwargs
+    print "done"
     if kwargs.get("script_id", ''):
         try:
             job_id = client.run_script(**kwargs)
