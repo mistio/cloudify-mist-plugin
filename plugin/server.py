@@ -141,6 +141,7 @@ def create(**kwargs):
     ctx.instance.runtime_properties['cloud_id'] = cloud_id
     ctx.instance.runtime_properties['mist_type'] = 'machine'
     ctx.instance.runtime_properties['info'] = machine.info
+    ctx.instance.runtime_properties['tags'] = machine.tags
     public_ips = machine.info.get('public_ips', [])
     # Filter out IPv6 addresses
     public_ips = filter(lambda ip: ':' not in ip, public_ips)
@@ -182,10 +183,9 @@ def run_script(**kwargs):
     client = connection.MistConnectionClient().client
     machine = connection.MistConnectionClient().machine
     kwargs['cloud_id'] = machine.cloud.id
+    kwargs['machine_id'] = str(machine.id)
     script_params = kwargs.pop("params", "")
     kwargs.pop('ctx', None)
-    print "kwargs: %s" % kwargs
-    print "done"
     if kwargs.get("script_id", ''):
         try:
             job_id = client.run_script(**kwargs)
