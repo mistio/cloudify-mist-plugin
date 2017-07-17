@@ -102,7 +102,7 @@ def create(**kwargs):
         raise NonRecoverableError('User authentication failed')
 
     params = ctx.node.properties['parameters']
-    cloud_id = params.pop('cloud_id')
+    cloud_id = params.get('cloud_id')
     cloud = client.clouds(id=cloud_id)[0]
 
     if ctx.node.properties['use_external_resource']:
@@ -116,6 +116,7 @@ def create(**kwargs):
         return
 
     try:
+        params.pop('cloud_id')
         name = params.pop('name', '') or utils.generate_name(stack_name,
                                                              node_type)
         key = params.pop('key')
@@ -180,10 +181,13 @@ def delete(**_):
 def run_script(**kwargs):
     client = connection.MistConnectionClient().client
     machine = connection.MistConnectionClient().machine
-    script_params = kwargs.get("params", "")
+    kwargs['cloud_id'] = machine.cloud.id
+    kwargs['machine_id'] = str(machine.id)
+    script_params = kwargs.pop("params", "")
+    kwargs.pop('ctx', None)
     if kwargs.get("script_id", ''):
         try:
-            job_id = machine.run_script(**kwargs)
+            job_id = client.run_script(**kwargs)
         except Exception as exc:
             raise NonRecoverableError(exc)
     else:
