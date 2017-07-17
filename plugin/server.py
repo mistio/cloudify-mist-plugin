@@ -141,7 +141,6 @@ def create(**kwargs):
     ctx.instance.runtime_properties['cloud_id'] = cloud_id
     ctx.instance.runtime_properties['mist_type'] = 'machine'
     ctx.instance.runtime_properties['info'] = machine.info
-    ctx.instance.runtime_properties['tags'] = machine.tags
     public_ips = machine.info.get('public_ips', [])
     # Filter out IPv6 addresses
     public_ips = filter(lambda ip: ':' not in ip, public_ips)
