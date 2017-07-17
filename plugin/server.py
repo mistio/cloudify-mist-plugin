@@ -171,10 +171,13 @@ def stop(**_):
 
 @operation
 def delete(**_):
-    try:
-        connection.MistConnectionClient().machine.destroy()
-    except Exception as exc:
-        raise Exception(exc)
+    if not ctx.node.properties['use_external_resource']:
+        try:
+            connection.MistConnectionClient().machine.destroy()
+        except Exception as exc:
+            raise Exception(exc)
+    else:
+        ctx.logger.info('use_external_resource flag is true, cannot delete.')
 
 
 @operation
