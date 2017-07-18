@@ -195,7 +195,7 @@ def run_script(**kwargs):
             raise NonRecoverableError(exc)
     else:
         try:
-            response = client.add_and_run_script(machine.cloud.id, machine.id,
+            response = client.add_and_run_script(machine.cloud.id,
                                                  script_params=script_params,
                                                  fire_and_forget=False,
                                                  **kwargs)
