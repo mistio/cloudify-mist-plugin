@@ -95,11 +95,6 @@ data_types:
           default: ''
       location_id:
           descsription: >
-            The id for the location of this machine
-          type: string
-          default: ''
-      location_name:
-          descsription: >
             The location/region to create resources in. If the IaaS supports regions,
             the region will have to be specified by its code and letter identifiers,
             such as "us-east-1" for US East (N. Virginia) in case of Amazon Services.
@@ -107,22 +102,25 @@ data_types:
           default: ''
       image_extra:
           description: >
-            Image specific extra details
+            Image specific extra details. This is used only when provisioning machines
+            in Linode.
           type: string
           default: ''
       disk:
           description: >
-            The disk that this machine will have
+            The disk that this machine will have. This is only required when provisioning
+            Linode machines.
           type: string
           default: ''
       script:
           description: >
-            Provide an inline script to run against the machine
+            An inline script to run against the machine. For using scripts added to mist
+            use the script_id, script_params parameters
           type: string
           default: ''
       monitoring:
           description: >
-            Enable monitoring on this machine
+            This field indicates whether on not to enable monitoring on this machine.
           type: boolean
           default: false
       ips:
@@ -140,17 +138,13 @@ data_types:
           default: ''
       script_id:
           description: >
-            The id of the script to run against this machine
+            The id of a script that has been added to mist, to run against this machine.
           type: string
           default: ''
       script_params:
           description: >
-            The params for the script 
-          type: string
-          default: ''
-      provider:
-          description: >
-            The provider where this machine will be created
+            Provides a list of parameters that will be provided to the script indicated
+            by the script_id above.
           type: string
           default: ''
       # This is only used in OpenStack clouds
@@ -158,7 +152,9 @@ data_types:
           type: boolean
           default: true
       tags:
-          description: A set of tags to assign to this machine
+          description: >
+            A set of tags to assign to this machine. The tags will should be
+            in the {'key':'provided_tag_key', 'value':'provided_tag_value'}
           default: {}
 
 
@@ -278,6 +274,53 @@ node_types:
             args:
               default: {}
 
+  cloudify.mist.nodes.Network:
+    derived_from: cloudify.nodes.Network
+    properties:
+      install_agent:
+        default: false
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          Either the name or ID of the resource in Cloudify. If this is an existing
+          resource, you should provide the name or the ID of the resource in Mist.io.
+        type: string
+        default: ''
+      parameters:
+        description: >
+          The key value pair parameters required by Mist Client to use
+          the mist.client.cloud.create_network command.(
+          {"network":{"name":"testnet","admin_state_up":true},
+          "subnet":{"name":"happy_subnet","ip_version":"4","cidr":"",
+          "gateway_ip":"","enable_dhcp":true,
+          "allocation_pools":[{"start":"","end":""}]}}: )
+        default: {}
+      mist_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Mist API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: mist.plugin.network.create
+        delete:
+          implementation: mist.plugin.network.delete
+
 relationships:
   cloudify.mist.relationships.server_connected_to_keypair:
     derived_from: cloudify.relationships.connected_to
+  cloudify.mist.relationships.server_connected_to_network:
+    derived_from: cloudify.relationships.depends_on
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: mist.plugin.network.associate_network
+          inputs:
+            ip:
+              default: ''
+            assign:
+              default: true
