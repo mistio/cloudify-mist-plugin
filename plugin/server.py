@@ -125,7 +125,7 @@ def create(**kwargs):
         if cloud.provider == 'linode':
             params['location_name'] = location_id
         if cloud.provider == 'gce':
-            for location in cloud.info.ctl.compute.list_locations():
+            for location in cloud.locations:
                 if location['id'] == location_id:
                     params['location_name'] = location['name']
         size_id = params.pop('size_id')
