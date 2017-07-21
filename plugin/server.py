@@ -121,9 +121,13 @@ def create(**kwargs):
         key = params.pop('key')
         image_id = params.pop('image_id')
         location_id = params.pop('location_id')
-        # GCE and Linode require the location as the `location_name` field.
-        if cloud.provider in ['linode']:
+        # Linode requires the location as the `location_name` field.
+        if cloud.provider == 'linode':
             params['location_name'] = location_id
+        if cloud.provider == 'gce':
+            for location in cloud.info.locationArray:
+                if location['id'] == location_id:
+                    params['location_name'] = location['name']
         size_id = params.pop('size_id')
         job = cloud.create_machine(name, key, image_id, location_id, size_id,
                                    async=True, fire_and_forget=False, **params)
