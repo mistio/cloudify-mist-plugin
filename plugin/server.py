@@ -129,9 +129,9 @@ def create(**kwargs):
                 if location['id'] == location_id:
                     params['location_name'] = location['name']
             for image in cloud.images:
+                print "Image: %s" % image
+                print "Image extra: %s" % image['extra']
                 if image_id == image['id']:
-                    print "Image: %s" % image
-                    print "Image extra: %s" % image['extra']
                     params['image_extra'] = image['extra']
         print "Params: %s" % params
         size_id = params.pop('size_id')
