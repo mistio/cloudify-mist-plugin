@@ -131,6 +131,7 @@ def create(**kwargs):
             for image in cloud.images:
                 if image_id == image['id']:
                     params['image_extra'] = image['extra']
+        print "Params: %s" % params
         size_id = params.pop('size_id')
         job = cloud.create_machine(name, key, image_id, location_id, size_id,
                                    async=True, fire_and_forget=False, **params)
