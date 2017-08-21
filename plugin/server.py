@@ -129,11 +129,8 @@ def create(**kwargs):
                 if location['id'] == location_id:
                     params['location_name'] = location['name']
             for image in cloud.images:
-                print "Image: %s" % image
-                print "Image extra: %s" % image['extra']
                 if image_id == image['id']:
                     params['image_extra'] = image['extra']
-        print "Params: %s" % params
         size_id = params.pop('size_id')
         job = cloud.create_machine(name, key, image_id, location_id, size_id,
                                    async=True, fire_and_forget=False, **params)
