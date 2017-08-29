@@ -41,14 +41,7 @@ def main():
 
     args = parse_args()
 
-    # TODO: Perhaps move to a separate method?
-    # loglvl = logging.DEBUG if args.verbose else logging.INFO
-    # logfmt = "[%(asctime)-15s][%(levelname)s] - %(message)s"
-    # handler = logging.StreamHandler()
-    # handler.setFormatter(logging.Formatter(logfmt))
-    # handler.setLevel(loglvl)  # Overridden by configuration
-    # log.addHandler(handler)
-    # log.setLevel(loglvl)
+    prepare_logging(args.verbose)
 
     cmdret = []
     node_instances = []
@@ -83,7 +76,6 @@ def main():
 
         if template['location_type'] == 'inline':
             # No inputs?
-            # inputs = {}
             path = os.path.abspath('/tmp/templates/template.yaml')
             with open(path, 'w+') as fobj:
                 fobj.write(template['template'])
@@ -115,16 +107,18 @@ def main():
                 log.error(exc)
             else:
                 path = find_path(template['entrypoint'], '/tmp/templates')
-        # elif template['location_type'] == 'url':
-        #     pass
-        # else:
-        #     raise Exception('Unsupported template location. It must be one '
-        #                     'of url|github|inline')
+        elif template['location_type'] == 'url':
+            pass
+        else:
+            raise Exception('Unsupported template location. It must be one '
+                            'of url|github|inline')
 
-        #
+
         folder = os.path.dirname(path)
         os.chdir(folder)
-        local_instances = os.path.abspath(os.path.join(folder, 'local-storage/local/node-instances'))
+        local_instances = os.path.abspath(
+            os.path.join(folder,
+            'local-storage/local/node-instances'))
 
         # Prepare inputs.
         with open('inputs.json', 'wb') as inputs:
@@ -149,7 +143,7 @@ def main():
                     ifile.write(json.dumps(instance))
 
         # Execute the cloudify workflow and store its output.
-        cmd = 'cfy local execute -w %s' args.workflow
+        cmd = 'cfy local execute -w %s' % args.workflow
         cmdret.append(run(cmd, fail_on_error=False))
 
         # TODO: Could we use `cfy local instances`?
@@ -251,6 +245,11 @@ def find_path(filename, dirname='.'):
 # TODO
 def prepare_logging(verbose=False):
     """Set logging configuration."""
+    logfmt = "[%(asctime)-15s][%(levelname)s] - %(message)s"
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(logfmt))
+    handler.setLevel(loglvl)  # Overridden by configuration
+    log.addHandler(handler)
     log.setLevel(logging.DEBUG if verbose else logging.INFO)
 
 
