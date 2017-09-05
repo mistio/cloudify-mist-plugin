@@ -62,7 +62,7 @@ def main():
         if 'mist_uri' in inputs.get('install', ''):
             inputs['install']['mist_uri'] = args.uri
         if 'mist_token' in inputs.get('install', ''):
-            inputs['install']['mist_token'] = args.apitoken
+            inputs['install']['mist_token'] = args.api_token
 
         # Storing the job ID corresponding to the particular Stack in order to
         # create nested logs during the execution of Cloudify workflows. The
@@ -76,6 +76,8 @@ def main():
 
         if template['location_type'] == 'inline':
             # No inputs?
+            if not os.path.exists('/tmp/templates'):
+                os.makedirs('/tmp/templates')
             path = os.path.abspath('/tmp/templates/template.yaml')
             with open(path, 'w+') as fobj:
                 fobj.write(template['template'])
@@ -121,8 +123,8 @@ def main():
             'local-storage/local/node-instances'))
 
         # Prepare inputs.
-        with open('inputs.json', 'wb') as inputs:
-            inputs.write(json.dumps(inputs.get(args.workflow)))
+        with open('inputs.json', 'wb') as inputsjson:
+            inputsjson.write(json.dumps(inputs.get(args.workflow)))
 
         # TODO
         # Initialize a new cloudify environment.
@@ -248,7 +250,7 @@ def prepare_logging(verbose=False):
     logfmt = "[%(asctime)-15s][%(levelname)s] - %(message)s"
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(logfmt))
-    handler.setLevel(loglvl)  # Overridden by configuration
+    # handler.setLevel(loglvl)  # Overridden by configuration
     log.addHandler(handler)
     log.setLevel(logging.DEBUG if verbose else logging.INFO)
 
