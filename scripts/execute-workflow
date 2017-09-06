@@ -12,6 +12,7 @@ import os
 import sys
 import json
 import copy
+import shlex
 import random
 import shutil
 import urllib
@@ -147,7 +148,7 @@ def main():
         # Execute the cloudify workflow and store its output.
         cmd = 'cfy local execute -w %s' % args.workflow
         cmdret.append(run(cmd, fail_on_error=False))
-
+        
         # TODO: Could we use `cfy local instances`?
         # Load the new set of instances in order to be stored in the db for
         # future reference.
@@ -183,13 +184,14 @@ def main():
 # TODO
 def run(cmd, shell=False, fail_on_error=True):
     """Run a command using the shell."""
-    cmd = ' '.join(cmd) if not isinstance(cmd, basestring) else cmd
+    #cmd = ' '.join(cmd) if not isinstance(cmd, basestring) else cmd
 
     def stream(proc):
         for line in iter(proc.stdout.readline, ''):
             yield line
 
     log.debug("Running command '%s'", cmd)
+    cmd = shlex.split(cmd)
     p = subprocess.Popen(cmd, shell=shell, universal_newlines=True,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     out = ''
