@@ -78,7 +78,7 @@ class MistConnectionClient(object):
             if not self.properties["resource_id"]:
                 raise NonRecoverableError(
                     "Cannot use external resource without defining resource_id")
-            machines = self.cloud.machines(id=self.properties["resource_id"])
+            machines = self.cloud.machines(id=str(self.properties["resource_id"]))
             if not len(machines):
                 raise NonRecoverableError(
                     "External resource not found")
@@ -121,7 +121,7 @@ class MistConnectionClient(object):
             if not kwargs["resource_id"]:
                 raise NonRecoverableError(
                     "Cannot use external resource without defining resource_id")
-            machines = self.cloud.machines(id=kwargs["resource_id"])
+            machines = self.cloud.machines(id=str(kwargs["resource_id"]))
             if not len(machines):
                 raise NonRecoverableError(
                     "External resource not found")
