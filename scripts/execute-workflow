@@ -84,9 +84,9 @@ def main():
                 fobj.write(template['template'])
         elif template['location_type'] == 'github':
             repo = template['template'].replace('https://github.com/', '')
-            repo = repo.split('tree/')
-            repo = repo[0].rstrip('/')
-            branch = repo[1].rstrip('/') if len(repo) > 1 else 'master'
+            repos = repo.split('tree/')
+            repo = repos[0].rstrip('/')
+            branch = repos[1].rstrip('/') if len(repos) > 1 else 'master'
 
             api = 'https://api.github.com/repos'
             resp = requests.get('%s/%s/commits' % (api, repo))
