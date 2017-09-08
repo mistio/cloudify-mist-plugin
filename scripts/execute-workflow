@@ -100,7 +100,7 @@ def main():
 
             resp = requests.get('%s/%s/tarball/%s' % (api, repo, branch),
                                 allow_redirects=False)
-            if not (resp.ok and resp.is_redict and 'location' in resp.headers):
+            if not (resp.ok and resp.is_redirect and 'location' in resp.headers):
                 raise Exception()
 
             path = download(resp.headers['location'])
