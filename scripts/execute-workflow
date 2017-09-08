@@ -75,10 +75,10 @@ def main():
         with open('/tmp/cloudify-mist-plugin-stack', 'w') as sf:
             sf.write(str(stack['name']))
 
+        if not os.path.exists('/tmp/templates'):
+            os.makedirs('/tmp/templates')
         if template['location_type'] == 'inline':
             # No inputs?
-            if not os.path.exists('/tmp/templates'):
-                os.makedirs('/tmp/templates')
             path = os.path.abspath('/tmp/templates/template.yaml')
             with open(path, 'w+') as fobj:
                 fobj.write(template['template'])
