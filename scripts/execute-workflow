@@ -45,7 +45,7 @@ def main():
     args = parse_args()
     prepare_logging(args.verbose)
 
-    exit_code = 0
+    exit_code = None
     cmdret = []
     node_instances = []
     outputs = {}
@@ -67,8 +67,6 @@ def main():
             inputs['install']['mist_uri'] = args.uri
         if 'mist_token' in inputs.get(args.workflow, ''):
             inputs['install']['mist_token'] = args.api_token
-        if args.workflow != 'install':
-            inputs[args.workflow] = inputs['install']
 
         # Storing the job ID corresponding to the particular Stack in order to
         # create nested logs during the execution of Cloudify workflows. The
@@ -129,7 +127,7 @@ def main():
 
         # Prepare inputs.
         with open('inputs.json', 'wb') as inputs_json:
-            inputs_json.write(json.dumps(inputs.get(args.workflow, {})))
+            inputs_json.write(json.dumps(inputs.get('install', {})))
 
         # Initialize a new cloudify environment.
         cmd = 'cfy local init -p %s -i inputs.json' % path
@@ -150,6 +148,11 @@ def main():
 
         # Execute the cloudify workflow and store its output.
         cmd = 'cfy local execute -w %s' % args.workflow
+        # Prepare non-install workflow specific inputs.
+        if args.workflow != 'install' and inputs.get(args.workflow):
+            with open('inputs.json', 'wb') as workflow_inputs:
+                workflow_inputs.write(json.dumps(inputs.get(args.workflow, {})))
+            cmd = cmd + " -p workflow_inputs.json"
         cmdret.append(run(cmd, fail_on_error=False))
 
         # TODO: Could we use `cfy local instances`?
