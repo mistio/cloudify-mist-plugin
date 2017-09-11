@@ -153,7 +153,8 @@ def main():
         # Load the new set of instances in order to be stored in the db for
         # future reference.
         for instance in os.listdir(local_instances):
-            with open(os.path.abspath(instance), 'r') as instance:
+            node_path = os.path.join(folder, 'local-storage/local/node-instances', instance)
+            with open(os.path.abspath(node_path), 'r') as instance:
                 node_instances.append(json.loads(instance))
 
         # Get the template's output, if available.
