@@ -38,13 +38,14 @@ RELATIVE_LOCAL_STORE_PATH = 'local-storage/local/node-instances/'
 
 
 def main():
-    # TODO: Add detailed docstring regarding how this works!
+    """
+    The main function handling the execution of a particular workflow.
+    The """
 
     args = parse_args()
-
     prepare_logging(args.verbose)
-    
-    exit_code = None
+
+    exit_code = 0
     cmdret = []
     node_instances = []
     outputs = {}
@@ -54,17 +55,20 @@ def main():
         client = MistClient(api_token=args.api_token, mist_uri=args.uri)
 
         # Fetch the Stack specified and its corresponding Template.
-        stack = client.show_stack(args.stack_id)
+        try:
+            stack = client.show_stack(args.stack_id)
+        except Exception as exc:
+                log.error(exc)
         template = client.show_template(stack['template'])
 
         inputs = stack["inputs"]
-        template_inputs = [ i['name'] for i in template['inputs'] ]  # Unused.
 
-        # TODO: Shouldn't be specific to `install`.
         if 'mist_uri' in inputs.get('install', ''):
             inputs['install']['mist_uri'] = args.uri
-        if 'mist_token' in inputs.get('install', ''):
+        if 'mist_token' in inputs.get(args.workflow, ''):
             inputs['install']['mist_token'] = args.api_token
+        if args.workflow != 'install':
+            inputs[args.workflow] = inputs['install']
 
         # Storing the job ID corresponding to the particular Stack in order to
         # create nested logs during the execution of Cloudify workflows. The
@@ -79,7 +83,6 @@ def main():
         if not os.path.exists('/tmp/templates'):
             os.makedirs('/tmp/templates')
         if template['location_type'] == 'inline':
-            # No inputs?
             path = os.path.abspath('/tmp/templates/template.yaml')
             with open(path, 'w+') as fobj:
                 fobj.write(template['template'])
@@ -125,10 +128,9 @@ def main():
             'local-storage/local/node-instances'))
 
         # Prepare inputs.
-        with open('inputs.json', 'wb') as inputsjson:
-            inputsjson.write(json.dumps(inputs.get(args.workflow)))
+        with open('inputs.json', 'wb') as inputs_json:
+            inputs_json.write(json.dumps(inputs.get(args.workflow, {})))
 
-        # TODO
         # Initialize a new cloudify environment.
         cmd = 'cfy local init -p %s -i inputs.json' % path
         cmdret.append(run(cmd))
@@ -149,7 +151,7 @@ def main():
         # Execute the cloudify workflow and store its output.
         cmd = 'cfy local execute -w %s' % args.workflow
         cmdret.append(run(cmd, fail_on_error=False))
-        
+
         # TODO: Could we use `cfy local instances`?
         # Load the new set of instances in order to be stored in the db for
         # future reference.
@@ -171,7 +173,6 @@ def main():
         exit_code = cmdret[-1][0]
         error = None
 
-    #
     log.info('Wrapper script execution finished with exit code %s' % exit_code)
     client.end_job(stack['job_id'],
                    exit_code=exit_code,
@@ -186,7 +187,6 @@ def main():
 # TODO
 def run(cmd, shell=False, fail_on_error=True):
     """Run a command using the shell."""
-    #cmd = ' '.join(cmd) if not isinstance(cmd, basestring) else cmd
 
     def stream(proc):
         for line in iter(proc.stdout.readline, ''):
@@ -254,7 +254,6 @@ def prepare_logging(verbose=False):
     logfmt = "[%(asctime)-15s][%(levelname)s] - %(message)s"
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(logfmt))
-    # handler.setLevel(loglvl)  # Overridden by configuration
     log.addHandler(handler)
     log.setLevel(logging.DEBUG if verbose else logging.INFO)
 
