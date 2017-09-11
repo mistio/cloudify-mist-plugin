@@ -65,7 +65,7 @@ def main():
 
         if 'mist_uri' in inputs.get('install', ''):
             inputs['install']['mist_uri'] = args.uri
-        if 'mist_token' in inputs.get(args.workflow, ''):
+        if 'mist_token' in inputs.get('install', ''):
             inputs['install']['mist_token'] = args.api_token
 
         # Storing the job ID corresponding to the particular Stack in order to
