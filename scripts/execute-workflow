@@ -171,9 +171,10 @@ def main():
                 node_instances.append(json.load(instance))
 
         # Get the template's output, if available.
-        outputs = run('cfy local outputs', fail_on_error=False)
-        cmdret.append(outputs)
-        outputs = json.loads(outputs[1])
+        if not cmdret[-1][0]:
+            outputs = run('cfy local outputs', fail_on_error=False)
+            cmdret.append(outputs)
+            outputs = json.loads(outputs[1])
     except Exception as exc:
         exit_code = 1
         error = repr(exc)
