@@ -33,7 +33,7 @@ requests.packages.urllib3.disable_warnings(
 log = logging.getLogger(__name__)
 
 
-ABSOLUTE_WORKING_DIR_PATH = '/tmp/templates/'
+ABSOLUTE_WORKING_DIR_PATH = '/tmp/templates'
 RELATIVE_LOCAL_STORE_PATH = 'local-storage/local/node-instances/'
 
 
@@ -47,7 +47,6 @@ def main():
     args = parse_args()
     prepare_logging(args.verbose)
 
-    exit_code = None
     cmdret = []
     node_instances = []
     outputs = {}
@@ -62,6 +61,9 @@ def main():
 
         inputs = stack["inputs"]
 
+        # TODO: We need to improve this.
+        # The presence and enforcement of these two inputs should eventually
+        # move into mist.
         if 'mist_uri' in inputs['install']:
             inputs['install']['mist_uri'] = args.uri
         else:
@@ -83,10 +85,10 @@ def main():
         with open('/tmp/cloudify-mist-plugin-stack', 'w') as sf:
             sf.write(str(stack['name']))
 
-        if not os.path.exists('/tmp/templates'):
-            os.makedirs('/tmp/templates')
+        if not os.path.exists(ABSOLUTE_WORKING_DIR_PATH):
+            os.makedirs(ABSOLUTE_WORKING_DIR_PATH)
         if template['location_type'] == 'inline':
-            path = os.path.abspath('/tmp/templates/template.yaml')
+            path = os.path.abspath(ABSOLUTE_WORKING_DIR_PATH + '/template.yaml')
             with open(path, 'w+') as fobj:
                 fobj.write(template['template'])
         elif template['location_type'] == 'github':
@@ -98,12 +100,13 @@ def main():
             api = 'https://api.github.com/repos'
             resp = requests.get('%s/%s/commits' % (api, repo))
             if not resp.ok:
-                raise Exception('Failed to retrieve template from Github.')
+                raise Exception('Failed to retrieve template from Github.'
+                                '%s status code, %s ' % (resp.status_code, resp.text))
             try:
                 resp = resp.json()
             except ValueError as exc:
-                log.error('Failed to decode due to %s error. Congrats!' % str(exc))
-                raise 
+                log.error('Failed to decode due to %s error. Congrats!' % exc)
+                raise
 
             resp = requests.get('%s/%s/tarball/%s' % (api, repo, branch),
                                 allow_redirects=False)
@@ -112,11 +115,11 @@ def main():
 
             path = download(resp.headers['location'])
             try:
-                unpack(path, '/tmp/templates/')
+                unpack(path, ABSOLUTE_WORKING_DIR_PATH + '/')
             except Exception as exc:
                 log.error(exc)
             else:
-                path = find_path(template['entrypoint'], '/tmp/templates')
+                path = find_path(template['entrypoint'], ABSOLUTE_WORKING_DIR_PATH)
         elif template['location_type'] == 'url':
             raise NotImplementedError()
         else:
@@ -156,7 +159,7 @@ def main():
         if args.workflow != 'install' and inputs.get(args.workflow):
             with open('workflow_inputs.json', 'wb') as workflow_inputs:
                 workflow_inputs.write(json.dumps(inputs.get(args.workflow, {})))
-            cmd = cmd + " -p workflow_inputs.json"
+            cmd += " -p workflow_inputs.json"
         cmdret.append(run(cmd, fail_on_error=False))
 
         # TODO: Could we use `cfy local instances`?
@@ -168,10 +171,9 @@ def main():
                 node_instances.append(json.load(instance))
 
         # Get the template's output, if available.
-        if not exit_code:
-            outputs = run('cfy local outputs', fail_on_error=False)
-            cmdret.append(outputs)
-            outputs = json.loads(outputs[1])
+        outputs = run('cfy local outputs', fail_on_error=False)
+        cmdret.append(outputs)
+        outputs = json.loads(outputs[1])
     except Exception as exc:
         exit_code = 1
         error = repr(exc)
