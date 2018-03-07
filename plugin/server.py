@@ -123,6 +123,10 @@ def create(**kwargs):
         image_id = params.pop('image_id')
         location_id = params.pop('location_id')
         size_id = params.pop('size_id')
+        if cloud.provider in constants.CLOUD_INIT_PROVIDERS:
+            cloud_init = kwargs.get('cloud_init', '')
+            env_vars = kwargs.get('env_vars', '')
+            params.update({'env_vars': env_vars, 'cloud_init': cloud_init})
         job = cloud.create_machine(name, key, image_id, location_id, size_id,
                                    async=True, fire_and_forget=False, **params)
         for log in job['logs']:
@@ -201,4 +205,3 @@ def run_script(**kwargs):
                                                  **kwargs)
         except Exception as exc:
             raise NonRecoverableError(exc)
-
