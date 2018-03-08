@@ -3,7 +3,7 @@ tosca_definitions_version: cloudify_dsl_1_2
 plugins:
   mist:
     executor: central_deployment_agent
-    source: "https://github.com/mistio/cloudify-mist-plugin/archive/master.zip"
+    source: "https://github.com/mistio/cloudify-mist-plugin/archive/kvm_template.zip"
 
 data_types:
   cloudify.datatypes.mist.Config:
@@ -73,6 +73,8 @@ data_types:
           default: ''
       associate_floating_ip:  # TODO not used?
           default: true
+      libvirt_disk_path:
+          default: ''
       tags:
           default: {}
 
