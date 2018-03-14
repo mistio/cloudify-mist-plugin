@@ -54,7 +54,6 @@ def main():
     outputs = {}
 
     try:
-        import ipdb; ipdb.set_trace()
         client = MistClient(api_token=argus.apitoken,
                             mist_uri=argus.uri)
         stack = client.show_stack(argus.stack_id)
