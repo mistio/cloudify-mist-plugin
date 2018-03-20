@@ -123,7 +123,6 @@ def create(**kwargs):
         image_id = params.pop('image_id')
         location_id = params.pop('location_id')
         size_id = params.pop('size_id')
-        import ipdb; ipdb.set_trace()
         if cloud.provider in constants.CLOUD_INIT_PROVIDERS:
             cloud_init = kwargs.get('cloud_init', '')
             env_vars = kwargs.get('env_vars', '')
