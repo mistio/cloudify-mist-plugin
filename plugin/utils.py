@@ -1,10 +1,12 @@
 import os
 import glob
 import json
+import time
 import string
 import random
 
 from cloudify import ctx
+from cloudify.exceptions import NonRecoverableError
 
 from plugin.constants import STORAGE
 
@@ -71,6 +73,53 @@ class LocalStorage(object):
         return node_file
 
 
+def wait_for_event(job_id, job_kwargs, timeout=1800):
+    """Wait for an event to take place.
+
+    This method enters a loop, while waiting for a specific event to
+    take place.
+
+    This method polls the workflow's logs over the mist.io API in order
+    to decide whether the specified event has finally occurred.
+
+    Parameters:
+
+        job_id:     the UUID of the job that includes the desired event
+        job_kwargs: a dict of key-value pairs that must match the event
+        timeout:    seconds to wait for, before raising an exception
+
+    This method will either exit with an exit code 0, if the desired
+    event occurs within a given timeframe, otherwise it will raise a
+    non-recoverable error.
+
+    """
+    ctx.logger.info('Waiting for event %s with kwargs=%s', job_id, job_kwargs)
+
+    # FIXME Re-think this.
+    from plugin.connection import MistConnectionClient
+    client = MistConnectionClient().client
+
+    # Mark the beginning of the polling period.
+    started_at = time.time()
+    timeout_at = started_at + timeout
+
+    while True:
+        for log in client.get_job(job_id).get('logs', []):
+            if all([log.get(k) == v for k, v in job_kwargs.iteritems()]):
+                if log.get('error'):
+                    msg = log.get('stdout', '') + log.get('extra_output', '')
+                    msg = msg or log['error']
+                    ctx.logger.error(msg)
+                    raise NonRecoverableError('Error in event %s', job_id)
+                break
+        else:
+            if time.time() > timeout_at:
+                raise NonRecoverableError('Time threshold exceeded!')
+            time.sleep(10)
+            continue
+        break
+
+
 def get_resource_id():
     """
     Returns the a resource's ID. If the user doesn't provide one, this method
@@ -128,4 +177,3 @@ def get_stack_name():
         with open('/tmp/cloudify-mist-plugin-stack', 'w') as sf:
             sf.write(stack_name)
     return stack_name
-

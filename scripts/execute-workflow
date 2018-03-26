@@ -167,6 +167,9 @@ def main():
         log.critical(exc)
         exit_code = -1
         error = str(exc)
+        # Set `node_instances` to None to prevent re-setting them to `[]` in
+        # case the workflow fails.
+        node_instances = None
 
     client.end_job(stack['job_id'],
                    exit_code=exit_code,
