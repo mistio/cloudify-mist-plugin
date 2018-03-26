@@ -35,9 +35,9 @@ log = logging.getLogger(__name__)
 def main():
     """Fetch and run executable script or ansible playbook"""
 
-    argus = parse_args()
+    args = parse_args()
 
-    loglvl = logging.DEBUG if argus.verbose else logging.INFO
+    loglvl = logging.DEBUG if args.verbose else logging.INFO
     logfmt = "[%(asctime)-15s][%(levelname)s] - %(message)s"
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(logfmt))
@@ -54,18 +54,18 @@ def main():
     outputs = {}
 
     try:
-        client = MistClient(api_token=argus.apitoken,
-                            mist_uri=argus.uri)
-        stack = client.show_stack(argus.stack_id)
+        client = MistClient(api_token=args.apitoken,
+                            mist_uri=args.uri)
+        stack = client.show_stack(args.stack_id)
         inputs = stack["inputs"]
         template_id = stack["template"]
         template = client.show_template(template_id)
         template_inputs = [ i['name'] for i in template['inputs'] ]
 
         if 'mist_uri' in inputs.get('install', ''):
-            inputs['install']['mist_uri'] = argus.uri
+            inputs['install']['mist_uri'] = args.uri
         if 'mist_token' in inputs.get('install', ''):
-            inputs['install']['mist_token'] = argus.apitoken
+            inputs['install']['mist_token'] = args.apitoken
 
         # Storing the job ID corresponding to the particular Stack in order to
         # create nested logs during the execution of Cloudify workflows. The
@@ -136,10 +136,10 @@ def main():
                 data.close()
         print mksep('end')
         print mksep('execute')
-        cmd = "cfy local execute -w {0}".format(argus.workflow)
-        if argus.workflow != 'install' and inputs.get(argus.workflow):
+        cmd = "cfy local execute -w {0}".format(args.workflow)
+        if args.workflow != 'install' and inputs.get(args.workflow):
             f = open("workflow_inputs.json", "wb")
-            f.write(json.dumps(inputs[argus.workflow]))
+            f.write(json.dumps(inputs[args.workflow]))
             f.close()
             cmd = cmd + " -p workflow_inputs.json"
         cmdret.append(shellcmd(cmd, break_on_error=False))
@@ -335,7 +335,6 @@ def parse_args():
                           help="Api token to use for authentication.")
         args, list_args = parser.parse_args()
         args.stack_id = list_args[0]
-
 
     return args
 

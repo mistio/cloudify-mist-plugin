@@ -30,8 +30,8 @@ RUN addgroup -S cloudify && adduser -S -G cloudify cloudify
 RUN chmod 775 /usr/local/bin/cfy && \
     chmod 775 /opt/cloudify-mist-plugin/scripts/execute-workflow
 
-# USER cloudify
+USER cloudify
 
-# ENTRYPOINT ["/opt/cloudify-mist-plugin/scripts/execute-workflow"]
+ENTRYPOINT ["/opt/cloudify-mist-plugin/scripts/execute-workflow"]
 
-# ENTRYPOINT ["/bin/sh"]
+ENTRYPOINT ["/bin/sh"]
