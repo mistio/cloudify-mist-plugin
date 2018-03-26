@@ -18,9 +18,6 @@ COPY ./plugin/mist.client/ /opt/cloudify-mist-plugin/plugin/mist.client/
 
 RUN pip install -e /opt/cloudify-mist-plugin/plugin/mist.client/
 
-RUN apk add --update --no-cache vim
-RUN pip install ipython ipdb
-
 COPY . /opt/cloudify-mist-plugin/
 
 RUN pip install -e /opt/cloudify-mist-plugin/
