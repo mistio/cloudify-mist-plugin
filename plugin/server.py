@@ -128,15 +128,29 @@ def create(**kwargs):
             env_vars = kwargs.get('env_vars', '')
             params.update({'env_vars': env_vars, 'cloud_init': cloud_init})
         job = cloud.create_machine(name, key, image_id, location_id, size_id,
-                                   async=True, fire_and_forget=False, **params)
-        for log in job['logs']:
-            if log['action'] == 'machine_creation_finished' and log[
-                                                     'machine_name'] == name:
-                ctx.instance.runtime_properties[
-                    'machine_id'] = log['machine_id']
-                break
+                                   async=True, **params)
     except Exception as exc:
         raise NonRecoverableError(exc)
+
+    # Wait for machine creation to finish.
+    event = utils.wait_for_event(
+        job_id=job['job_id'],
+        job_kwargs={
+            'action': 'machine_creation_finished',
+            'machine_name': name
+        },
+        timeout=600
+    )
+    ctx.instance.runtime_properties['machine_id'] = event['machine_id']
+
+    # Wait for machine's post-deploy configuration to finish.
+    event = utils.wait_for_event(
+        job_id=job['job_id'],
+        job_kwargs={
+            'action': 'post_deploy_finished',
+            'machine_id': ctx.instance.runtime_properties['machine_id'],
+        }
+    )
 
     machine_id = ctx.instance.runtime_properties[
         'machine_id'] or ctx.node.properties['resource_id']

@@ -103,6 +103,19 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
     started_at = time.time()
     timeout_at = started_at + timeout
 
+    # Wait for newly indexed events to become available/searchable.
+    for _ in range(30):
+        try:
+            client.get_job(job_id)
+        except Exception as exc:
+            ctx.logger.debug('Failed to get logs of %s: %r', job_id, exc)
+            time.sleep(1)
+        else:
+            break
+    else:
+        raise
+
+    # Poll for the event with the specified key-values pairs.
     while True:
         for log in client.get_job(job_id).get('logs', []):
             if all([log.get(k) == v for k, v in job_kwargs.iteritems()]):
@@ -110,14 +123,12 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
                     msg = log.get('stdout', '') + log.get('extra_output', '')
                     msg = msg or log['error']
                     ctx.logger.error(msg)
-                    raise NonRecoverableError('Error in event %s', job_id)
-                break
+                    raise NonRecoverableError('Error in event %s' % job_id)
+                return log
         else:
             if time.time() > timeout_at:
                 raise NonRecoverableError('Time threshold exceeded!')
             time.sleep(10)
-            continue
-        break
 
 
 def get_resource_id():
