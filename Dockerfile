@@ -30,5 +30,3 @@ RUN chmod 775 /usr/local/bin/cfy && \
 USER cloudify
 
 ENTRYPOINT ["/opt/cloudify-mist-plugin/scripts/execute-workflow"]
-
-ENTRYPOINT ["/bin/sh"]
