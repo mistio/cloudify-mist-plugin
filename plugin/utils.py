@@ -8,10 +8,37 @@ import random
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 
-from plugin.constants import STORAGE
+from plugin.constants import STORAGE, STORAGE2
 
 
+# TODO Merge with LocalStorageOld, once scale_down workflow is polished.
 class LocalStorage(object):
+
+    def __init__(self, storage=None):
+        storage = glob.glob(storage or STORAGE2)
+        if not storage:
+            raise Exception()
+        if len(storage) > 1:
+            raise Exception()
+        self.storage = storage[0]
+
+    def get_node_instance(self, instance_id):
+        with open(os.path.join(self.storage, instance_id)) as fobj:
+            instance = json.loads(fobj.read())
+        return instance
+
+    def clone_node_instance(self, instance_id):
+        instance = self.get_node_instance(instance_id)
+        host_id = '%s_%s' % (instance['name'], random_string(5))
+        instance['id'] = host_id
+        instance['host_id'] = host_id
+        with open(os.path.join(self.storage, host_id), 'w') as fobj:
+            fobj.write(json.dumps(instance))
+        return instance
+
+
+# TODO Deprecated
+class LocalStorageOld(object):
     """
     LocalStorage gives full access to a node instance's properties by reading
     the instance object directly from file
@@ -125,10 +152,11 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
                     ctx.logger.error(msg)
                     raise NonRecoverableError('Error in event %s' % job_id)
                 return log
-        else:
-            if time.time() > timeout_at:
-                raise NonRecoverableError('Time threshold exceeded!')
-            time.sleep(10)
+
+        if time.time() > timeout_at:
+            raise NonRecoverableError('Time threshold exceeded!')
+
+        time.sleep(10)
 
 
 def get_resource_id():

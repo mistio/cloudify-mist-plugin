@@ -107,9 +107,12 @@ class MistConnectionClient(object):
             if self.ctx:
                 ctx.logger.info('Found multiple machines with the same name')
             for m in machines:
-                if m.info["state"] in ["running", "stopped"]:
-                    machines[0] = m
+                if m.name == self.properties['parameters']["name"] and m.info["state"] in ["running", "stopped"]:
+                    machines = [m]
                     break
+            else:
+                raise NonRecoverableError('Could not find machine')
+
         if self.ctx:
             ctx.instance.runtime_properties['machine_id'] = machines[0].info["id"]
         return machines[0]

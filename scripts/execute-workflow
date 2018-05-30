@@ -320,7 +320,7 @@ def parse_args():
                             help="Api token to use for authentication.")
         parser.add_argument('-v', '--verbose', action='store_true',
                             help="Show debug logs.")
-        args = parser.parse_args()
+        return parser.parse_args()
     except ImportError:
         # Python 2.6 does not have argparse
         import optparse
@@ -338,6 +338,7 @@ def parse_args():
                           help="Api token to use for authentication.")
         args, list_args = parser.parse_args()
         args.stack_id = list_args[0]
+
     return args
 
 

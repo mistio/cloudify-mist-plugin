@@ -1,18 +1,12 @@
-import os
 import time
-import string
-import random
 
 from plugin import utils
-from plugin import keypair
 from plugin import constants
 from plugin import connection
 
-from mistclient import MistClient
-
 from cloudify import ctx
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError, RecoverableError
+from cloudify.exceptions import NonRecoverableError
 
 
 @operation
@@ -90,8 +84,21 @@ def creation_validation(**_):
                     'Machine {0} error state.'.format(machine_name))
 
 
-@operation
-def create(**kwargs):
+def create_machine(properties, skip_post_deploy_validation=False, **kwargs):
+    """Create a machine with the given parameters by invoking the MistClient.
+
+    The `properties` must include all parameters required for the machine's
+    creation. These parameters are supposed to be populated mainly by the
+    blueprint's inputs. In the simplest scenario, `properties` should be
+    equal to `ctx.node.properties`. But, they can also be modified before
+    passed into this method.
+
+    Similarly, `kwargs` correspond to a specific operation's inputs and they
+    should be used likewise, even if this method is not invoked directly by
+    the blueprint's lifecycle operation, but rather from another method, such
+    as user-defined workflow.
+
+    """
     stack_name = utils.get_stack_name()
     node_type = kwargs.get('node_type', 'instance')
 
@@ -101,28 +108,30 @@ def create(**kwargs):
     except:
         raise NonRecoverableError('User authentication failed')
 
-    params = ctx.node.properties['parameters']
-    cloud_id = params.get('cloud_id')
+    params = properties['parameters']
+    cloud_id = params.pop('cloud_id')
     cloud = client.clouds(id=cloud_id)[0]
 
-    if ctx.node.properties['use_external_resource']:
-        machine = mist_client.machine
-        ctx.instance.runtime_properties['mist_type'] = 'machine'
-        ctx.instance.runtime_properties['info'] = machine.info
-        public_ips = machine.info.get('public_ips', [])
-        if public_ips:
-            ctx.instance.runtime_properties['ip'] = public_ips[0]
-            ctx.instance.runtime_properties['networks'] = public_ips
-        return
+    # # TODO Decide how to handle this properly.
+    # if ctx.node.properties['use_external_resource']:
+    #     machine = mist_client.machine
+    #     ctx.instance.runtime_properties['mist_type'] = 'machine'
+    #     ctx.instance.runtime_properties['info'] = machine.info
+    #     public_ips = machine.info.get('public_ips', [])
+    #     if public_ips:
+    #         ctx.instance.runtime_properties['ip'] = public_ips[0]
+    #         ctx.instance.runtime_properties['networks'] = public_ips
+    #     return
 
     try:
-        params.pop('cloud_id')
-        name = params.pop('name', '') or utils.generate_name(stack_name,
-                                                             node_type)
-        key = params.pop('key')
+        name = (
+            params.pop('name', '') or  # Get or auto-generate.
+            utils.generate_name(stack_name, node_type)
+        )
+        key = params.pop('key') or ''  # Avoid None.
+        size_id = params.pop('size_id')
         image_id = params.pop('image_id')
         location_id = params.pop('location_id')
-        size_id = params.pop('size_id')
         job = cloud.create_machine(name, key, image_id, location_id, size_id,
                                    async=True, **params)
     except Exception as exc:
@@ -140,27 +149,32 @@ def create(**kwargs):
     ctx.instance.runtime_properties['machine_id'] = event['machine_id']
 
     # Wait for machine's post-deploy configuration to finish.
-    event = utils.wait_for_event(
-        job_id=job['job_id'],
-        job_kwargs={
-            'action': 'post_deploy_finished',
-            'machine_id': ctx.instance.runtime_properties['machine_id'],
-        }
-    )
+    if key and not skip_post_deploy_validation:
+        event = utils.wait_for_event(
+            job_id=job['job_id'],
+            job_kwargs={
+                'action': 'post_deploy_finished',
+                'machine_id': ctx.instance.runtime_properties['machine_id'],
+            }
+        )
 
-    machine_id = ctx.instance.runtime_properties[
-        'machine_id'] or ctx.node.properties['resource_id']
+    # Update the node instance's runtime properties.
+    ctx.instance.runtime_properties['machine_name'] = name
+    ctx.instance.runtime_properties['job_id'] = job['job_id']
+
     cloud.update_machines()
+    machine_id = ctx.instance.runtime_properties['machine_id']
     machine = cloud.machines(id=machine_id)[0]
+
+    ctx.instance.runtime_properties['info'] = machine.info
     ctx.instance.runtime_properties['cloud_id'] = cloud_id
     ctx.instance.runtime_properties['mist_type'] = 'machine'
-    ctx.instance.runtime_properties['info'] = machine.info
-    public_ips = machine.info.get('public_ips', [])
-    # Filter out IPv6 addresses
-    public_ips = filter(lambda ip: ':' not in ip, public_ips)
-    if public_ips:
-        ctx.instance.runtime_properties['ip'] = public_ips[0]
-        ctx.instance.runtime_properties['networks'] = public_ips
+
+
+@operation
+def create(**kwargs):
+    node_properties = ctx.node.properties.copy()
+    create_machine(node_properties, **kwargs)
 
 
 @operation
@@ -168,7 +182,7 @@ def start(**_):
     try:
         connection.MistConnectionClient().machine.start()
     except Exception as exc:
-        ctx.logger.error("Failed to start machine. Already running?")
+        ctx.logger.error('Failed to start machine. %s', exc)
     if ctx.node.properties.get("monitoring"):
         connection.MistConnectionClient().machine.enable_monitoring()
         ctx.logger.info('Monitoring enabled')
@@ -180,7 +194,7 @@ def stop(**_):
         connection.MistConnectionClient().machine.stop()
         ctx.logger.info('Machine stopped')
     except Exception as exc:
-        ctx.logger.error('Failed to stop machine. Is \'stop\' supported?')
+        ctx.logger.error('Failed to stop machine. %s', exc)
 
 
 @operation
@@ -189,7 +203,7 @@ def delete(**_):
         try:
             connection.MistConnectionClient().machine.destroy()
         except Exception as exc:
-            raise Exception(exc)
+            ctx.logger.error('Failed to destroy machine. %s', exc)
     else:
         ctx.logger.info('use_external_resource flag is true, cannot delete.')
 
@@ -215,4 +229,3 @@ def run_script(**kwargs):
                                                  **kwargs)
         except Exception as exc:
             raise NonRecoverableError(exc)
-
