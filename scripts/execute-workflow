@@ -87,7 +87,7 @@ def main():
         elif location_type == "github":
             os.mkdir("/tmp/templates/")
             os.chdir("/tmp/templates/")
-            shellcmd(template["_git_clone_command"])
+            shellcmd(os.getenv("MIST_GIT_CLONE_COMMAND"))
             path = find_path("/tmp/templates", template["entrypoint"])
 
         folder = find_folder('/tmp/templates')
