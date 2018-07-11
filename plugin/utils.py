@@ -15,12 +15,7 @@ from plugin.constants import STORAGE, STORAGE2
 class LocalStorage(object):
 
     def __init__(self, storage=None):
-        storage = glob.glob(storage or STORAGE2)
-        if not storage:
-            raise Exception()
-        if len(storage) > 1:
-            raise Exception()
-        self.storage = storage[0]
+        self.storage = (storage or STORAGE2)
 
     def get_node_instance(self, instance_id):
         with open(os.path.join(self.storage, instance_id)) as fobj:
@@ -86,7 +81,7 @@ class LocalStorageOld(object):
         required node instance
         """
         local_storage = os.path.join('/tmp/templates',
-                                     'mistio-kubernetes-blueprint-[A-Za-z0-9]*',
+                                     'kubernetes-blueprint',
                                      STORAGE % node)
         local_storage = glob.glob(local_storage)
         if local_storage:
