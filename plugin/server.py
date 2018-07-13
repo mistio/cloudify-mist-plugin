@@ -108,63 +108,67 @@ def create_machine(properties, skip_post_deploy_validation=False, **kwargs):
     except:
         raise NonRecoverableError('User authentication failed')
 
+    # The job_id associated with the current workflow.
+    job_id = client.job_id
+
+    # Get the cloud. This is required whether we are about to provision a new
+    # machine or use an already existing one.
     params = properties['parameters']
     cloud_id = params.pop('cloud_id')
     cloud = client.clouds(id=cloud_id)[0]
 
-    # # TODO Decide how to handle this properly.
-    # if ctx.node.properties['use_external_resource']:
-    #     machine = mist_client.machine
-    #     ctx.instance.runtime_properties['mist_type'] = 'machine'
-    #     ctx.instance.runtime_properties['info'] = machine.info
-    #     public_ips = machine.info.get('public_ips', [])
-    #     if public_ips:
-    #         ctx.instance.runtime_properties['ip'] = public_ips[0]
-    #         ctx.instance.runtime_properties['networks'] = public_ips
-    #     return
+    if properties['use_external_resource']:
+        resource_id = properties['resource_id']
+        if not resource_id:
+            raise NonRecoverableError('Flag use_external_resource is True, '
+                                      'but resource_id is missing')
 
-    try:
-        name = (
-            params.pop('name', '') or  # Get or auto-generate.
-            utils.generate_name(stack_name, node_type)
-        )
-        key = params.pop('key') or ''  # Avoid None.
-        size_id = params.pop('size_id')
-        image_id = params.pop('image_id')
-        location_id = params.pop('location_id')
-        job = cloud.create_machine(name, key, image_id, location_id, size_id,
-                                   async=True, **params)
-    except Exception as exc:
-        raise NonRecoverableError(exc)
+        ctx.instance.runtime_properties['machine_id'] = str(resource_id)
+        ctx.instance.runtime_properties['use_external_resource'] = True
+    else:
+        try:
+            name = (
+                params.pop('name', '') or  # Get or auto-generate.
+                utils.generate_name(stack_name, node_type)
+            )
+            key = params.pop('key') or ''  # Avoid None.
+            size_id = params.pop('size_id')
+            image_id = params.pop('image_id')
+            location_id = params.pop('location_id')
+            job = cloud.create_machine(name, key, image_id, location_id,
+                                       size_id, async=True, **params)
+        except Exception as exc:
+            raise NonRecoverableError(exc)
 
-    # Wait for machine creation to finish.
-    event = utils.wait_for_event(
-        job_id=job['job_id'],
-        job_kwargs={
-            'action': 'machine_creation_finished',
-            'machine_name': name
-        },
-        timeout=600
-    )
-    ctx.instance.runtime_properties['machine_id'] = event['machine_id']
-
-    # Wait for machine's post-deploy configuration to finish.
-    if key and not skip_post_deploy_validation:
+        # Wait for machine creation to finish.
         event = utils.wait_for_event(
             job_id=job['job_id'],
             job_kwargs={
-                'action': 'post_deploy_finished',
-                'machine_id': ctx.instance.runtime_properties['machine_id'],
-            }
+                'action': 'machine_creation_finished',
+                'machine_name': name
+            },
+            timeout=600
         )
+        ctx.instance.runtime_properties['machine_id'] = event['machine_id']
+        ctx.instance.runtime_properties['use_external_resource'] = False
+
+        # Wait for machine's post-deploy configuration to finish.
+        if key and not skip_post_deploy_validation:
+            event = utils.wait_for_event(
+                job_id=job['job_id'],
+                job_kwargs={
+                    'action': 'post_deploy_finished',
+                    'machine_id': event['machine_id'],
+                }
+            )
 
     # Update the node instance's runtime properties.
-    ctx.instance.runtime_properties['machine_name'] = name
-    ctx.instance.runtime_properties['job_id'] = job['job_id']
-
     cloud.update_machines()
     machine_id = ctx.instance.runtime_properties['machine_id']
     machine = cloud.machines(id=machine_id)[0]
+
+    ctx.instance.runtime_properties['job_id'] = job_id
+    ctx.instance.runtime_properties['machine_name'] = machine.name
 
     ctx.instance.runtime_properties['info'] = machine.info
     ctx.instance.runtime_properties['cloud_id'] = cloud_id
@@ -199,9 +203,12 @@ def stop(**_):
 
 @operation
 def delete(**_):
-    if not ctx.node.properties['use_external_resource']:
+    if not ctx.instance.runtime_properties.get('use_external_resource'):
         try:
-            connection.MistConnectionClient().machine.destroy()
+            cloud = connection.MistConnectionClient().cloud
+            machine_id = ctx.instance.runtime_properties['machine_id']
+            machine = cloud.machines(id=machine_id)[0]
+            machine.destroy()
         except Exception as exc:
             ctx.logger.error('Failed to destroy machine. %s', exc)
     else:
