@@ -117,9 +117,9 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
     """
     ctx.logger.info('Waiting for event %s with kwargs=%s', job_id, job_kwargs)
 
-    # FIXME Re-think this.
+    # FIXME Imported here due to circular dependency issues.
     from plugin.connection import MistConnectionClient
-    client = MistConnectionClient().client
+    conn = MistConnectionClient()
 
     # Mark the beginning of the polling period.
     started_at = time.time()
@@ -128,7 +128,7 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
     # Wait for newly indexed events to become available/searchable.
     for _ in range(30):
         try:
-            client.get_job(job_id)
+            conn.client.get_job(job_id)
         except Exception as exc:
             ctx.logger.debug('Failed to get logs of %s: %r', job_id, exc)
             time.sleep(1)
@@ -139,7 +139,7 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
 
     # Poll for the event with the specified key-values pairs.
     while True:
-        for log in client.get_job(job_id).get('logs', []):
+        for log in conn.client.get_job(job_id).get('logs', []):
             if all([log.get(k) == v for k, v in job_kwargs.iteritems()]):
                 if log.get('error'):
                     msg = log.get('stdout', '') + log.get('extra_output', '')
@@ -152,25 +152,6 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
             raise NonRecoverableError('Time threshold exceeded!')
 
         time.sleep(10)
-
-
-def get_resource_id():
-    """
-    Returns the a resource's ID. If the user doesn't provide one, this method
-    will create one instead
-    :param node_properties: The node properties dictionary
-    :return resource_id: A string
-    """
-
-    if ctx.node.properties['resource_id']:
-        return ctx.node.properties['resource_id']
-    elif 'private_key_path' in ctx.node.properties:
-        directory_path, filename = os.path.split(ctx.node.properties[
-                                                  'private_key_path'])
-        resource_id, filetype = filename.split('.')
-        return resource_id
-
-    return '{0}-{1}'.format(ctx.deployment.id, ctx.instance.id)
 
 
 def generate_name(stack, role):
@@ -211,3 +192,37 @@ def get_stack_name():
         with open('/tmp/cloudify-mist-plugin-stack', 'w') as sf:
             sf.write(stack_name)
     return stack_name
+
+
+def is_resource_external(properties=None):
+    """Return True if resource is external
+
+    A resource is considered external if it already exists, so it won't be
+    created. The check is performed against the node's properties. Another
+    properties dict may be optionally passed to this method, which will be
+    used instead of `ctx.node.properties`.
+
+    """
+    return (properties or ctx.node.properties).get('use_external_resource')
+
+
+def get_external_resource_id(properties=None):
+    """Return the id of an external resource
+
+    A resource is considered external if it already exists, so it won't be
+    created. The check is performed against the node's properties. Another
+    properties dict may be optionally passed to this method, which will be
+    used instead of `ctx.node.properties`.
+
+    If the node instance of the current execution thread isn't external,
+    then an exception will be thrown. Otherwise, it is expected that the
+    resource's id can be found under the `resource_id` key.
+
+    """
+    properties = properties or ctx.node.properties
+    if not is_resource_external(properties):
+        raise NonRecoverableError('use_external_resource is False')
+    if not properties.get('resource_id'):
+        raise NonRecoverableError('use_external_resource is True, but '
+                                  'resource_id is missing')
+    return properties['resource_id']
