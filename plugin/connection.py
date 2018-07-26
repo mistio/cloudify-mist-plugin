@@ -24,10 +24,6 @@ class MistConnectionClient(object):
         """
         self._client = None
 
-        # FIXME Undo this when the scale-down workflow of the kubernetes
-        # blueprint is re-factored.
-        self.node_properties = kwargs.get('properties') or ctx.node.properties
-
         # Connection parameters.
         self._uri = self._config.get('mist_uri')
         self._token = self._config.get('mist_token')
@@ -48,7 +44,7 @@ class MistConnectionClient(object):
     @property
     def _config(self):
         """Return the settings required to authenticate to the mist.io API"""
-        _config = self.node_properties.get('mist_config', {})
+        _config = ctx.node.properties.get('mist_config', {})
         if not _config:
             raise NonRecoverableError('Authentication: mist_config missing!')
         if not _config.get('mist_token'):

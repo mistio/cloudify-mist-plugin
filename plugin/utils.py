@@ -1,5 +1,4 @@
 import os
-import glob
 import json
 import time
 import string
@@ -8,14 +7,14 @@ import random
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 
-from plugin.constants import STORAGE, STORAGE2
+from plugin.constants import STORAGE
 
 
-# TODO Merge with LocalStorageOld, once scale_down workflow is polished.
 class LocalStorage(object):
+    """Access node instances on the local filesystem"""
 
-    def __init__(self, storage=None):
-        self.storage = (storage or STORAGE2)
+    def __init__(self, storage=STORAGE):
+        self.storage = storage
 
     def get_node_instance(self, instance_id):
         with open(os.path.join(self.storage, instance_id)) as fobj:
@@ -30,69 +29,6 @@ class LocalStorage(object):
         with open(os.path.join(self.storage, host_id), 'w') as fobj:
             fobj.write(json.dumps(instance))
         return instance
-
-
-# TODO Deprecated
-class LocalStorageOld(object):
-    """
-    LocalStorage gives full access to a node instance's properties by reading
-    the instance object directly from file
-
-    This class is meant to be called as such:
-
-        node_instance = LocalStorage.get('kube_master')
-
-    where `kube_master` is the actual node_instance as defined in the
-    respective blueprint. In order to access the runtime properties simply call:
-
-        node_instance.runtime_properties
-
-    which will return the dict of all of the instance's runtime properties
-    """
-    def __init__(self, node):
-        """
-        Searches in local-storage for the file that corresponds to the node
-        instance provided
-        """
-        instance_file = self.fetch_instance_file(node)
-        with open(instance_file, 'r') as _instance:
-            instance_from_file = _instance.read()
-
-        self.instance_from_file = json.loads(instance_from_file)
-
-    @classmethod
-    def get(cls, node):
-        """
-        A class method to initiate the LocalStorage with the specified node
-        """
-        node = cls(node)
-        return node
-
-    @property
-    def runtime_properties(self):
-        """
-        Returns the node instance's runtime properties
-        """
-        return self.instance_from_file['runtime_properties']
-
-    def fetch_instance_file(self, node):
-        """
-        Tries to discover the path of local-storage in order to fetch the
-        required node instance
-        """
-        local_storage = os.path.join('/tmp/templates',
-                                     'kubernetes-blueprint',
-                                     STORAGE % node)
-        local_storage = glob.glob(local_storage)
-        if local_storage:
-            node_file = local_storage[0]
-        # TODO: Well, this is weird, but the local-storage exists on a different
-        # path in case a user executes `cfy local` directly from his terminal
-        else:
-            if not os.path.exists(os.path.join('..', STORAGE % node)):
-                raise Exception('Failed to locate local-storage')
-            node_file = os.path.join('..', STORAGE % node)
-        return node_file
 
 
 def wait_for_event(job_id, job_kwargs, timeout=1800):
@@ -137,7 +73,7 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
     else:
         raise
 
-    # Poll for the event with the specified key-values pairs.
+    # Poll for the event with the specified key-value pairs.
     while True:
         for log in conn.client.get_job(job_id).get('logs', []):
             if all([log.get(k) == v for k, v in job_kwargs.iteritems()]):
