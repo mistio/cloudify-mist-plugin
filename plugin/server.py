@@ -143,8 +143,7 @@ def create_machine(properties, skip_post_deploy_validation=False, **kwargs):
         job_kwargs={
             'action': 'machine_creation_finished',
             'machine_name': name
-        },
-        timeout=600
+        }
     )
     ctx.instance.runtime_properties['machine_id'] = event['machine_id']
 
