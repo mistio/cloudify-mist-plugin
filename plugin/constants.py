@@ -9,11 +9,9 @@ INSTANCE_REQUIRED_PROPERTIES = [
     'location_id'
 ]
 
-STORAGE = 'local-storage/local/node-instances/%s_[A-Za-z0-9]*'
-STORAGE2 = '/tmp/templates/kubernetes-blueprint/local-storage/local/node-instances'
-
-CREATE_TIMEOUT = 60 * 10
-SCRIPT_TIMEOUT = 60 * 30
+STORAGE = (
+    "/tmp/templates/kubernetes-blueprint/local-storage/local/node-instances"
+)
 
 CLOUD_INIT_PROVIDERS = [
     "libvirt"
