@@ -139,7 +139,9 @@ def is_resource_external(properties=None):
     used instead of `ctx.node.properties`.
 
     """
-    return (properties or ctx.node.properties).get('use_external_resource')
+    properties = properties or ctx.node.properties
+    return bool(properties.get('parameters', {}).get('machine_id', '') or
+                properties.get('use_external_resource', False))
 
 
 def get_external_resource_id(properties=None):
@@ -156,9 +158,23 @@ def get_external_resource_id(properties=None):
 
     """
     properties = properties or ctx.node.properties
-    if not is_resource_external(properties):
-        raise NonRecoverableError('use_external_resource is False')
-    if not properties.get('resource_id'):
-        raise NonRecoverableError('use_external_resource is True, but '
-                                  'resource_id is missing')
-    return properties['resource_id']
+    #if not is_resource_external(properties):
+    #    raise NonRecoverableError('use_external_resource is False')
+    #if not properties.get('resource_id'):
+    #    raise NonRecoverableError('use_external_resource is True, but '
+    #                              'resource_id is missing')
+    #return properties['resource_id']
+    #
+    #if not properties.get('parameters', {}).get('machine_id'):
+    #    raise NonRecoverableError('machine_id missing for existing resource')
+    #return properties['parameters']['machine_id']
+
+    if is_resource_external(properties):
+        if properties.get('use_external_resource'):
+            if not properties.get('resource_id'):
+                raise
+            return properties['resource_id']
+        if properties.get('parameters', {}).get('machine_id'):
+            return properties['parameters']['machine_id']
+        raise
+    raise NonRecoverableError('use_external_resource is False')
