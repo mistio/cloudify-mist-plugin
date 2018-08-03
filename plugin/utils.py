@@ -130,6 +130,7 @@ def get_stack_name():
     return stack_name
 
 
+# TODO Rename `machine_id` to `resource_id` so that it's more generic.
 def is_resource_external(properties=None):
     """Return True if resource is external
 
@@ -139,7 +140,9 @@ def is_resource_external(properties=None):
     used instead of `ctx.node.properties`.
 
     """
-    return (properties or ctx.node.properties).get('use_external_resource')
+    properties = properties or ctx.node.properties
+    return bool(properties.get('parameters', {}).get('machine_id', '') or
+                properties.get('use_external_resource', False))
 
 
 def get_external_resource_id(properties=None):
@@ -156,9 +159,12 @@ def get_external_resource_id(properties=None):
 
     """
     properties = properties or ctx.node.properties
-    if not is_resource_external(properties):
-        raise NonRecoverableError('use_external_resource is False')
-    if not properties.get('resource_id'):
-        raise NonRecoverableError('use_external_resource is True, but '
-                                  'resource_id is missing')
-    return properties['resource_id']
+    if is_resource_external(properties):
+        if properties.get('use_external_resource'):
+            if not properties.get('resource_id'):
+                raise NonRecoverableError('resource_id missing')
+            return properties['resource_id']
+        if properties.get('parameters', {}).get('machine_id'):
+            return properties['parameters']['machine_id']
+        raise NonRecoverableError('Parameter machine_id missing')
+    raise NonRecoverableError('use_external_resource is False')

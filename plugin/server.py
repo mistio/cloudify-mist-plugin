@@ -109,7 +109,7 @@ def create_machine(properties, skip_post_deploy_validation=False, **kwargs):
 
     params = properties['parameters']
 
-    if properties['use_external_resource']:
+    if utils.is_resource_external(properties):
         cloud_id = get_cloud_id(properties)
         machine_id = get_machine_id(properties)
         cloud = conn.get_cloud(cloud_id)
@@ -120,12 +120,16 @@ def create_machine(properties, skip_post_deploy_validation=False, **kwargs):
         cloud_id = params.pop('cloud_id')
         cloud = conn.get_cloud(cloud_id)
 
+        # Ensure no machine_id is provided upon machine creation.
+        params.pop('machine_id', None)
+
+        # Provision new machine.
         try:
             name = (
                 params.pop('name', '') or  # Get or auto-generate.
                 utils.generate_name(stack_name, node_type)
             )
-            key = params.pop('key') or ''  # Avoid None.
+            key = params.pop('key_id') or ''  # Avoid None.
             size_id = params.pop('size_id')
             image_id = params.pop('image_id')
             location_id = params.pop('location_id')
@@ -350,7 +354,7 @@ def get_machine_id(properties=None):
         raise NonRecoverableError('Cannot get id of non-external machine')
 
     resource_id = utils.get_external_resource_id(properties)
-    ctx.logger.info('Looking for machine_id in resource_id %s', resource_id)
+    ctx.logger.info('Looking for machine_id in parameter %s', resource_id)
 
     if isinstance(resource_id, (basestring, int)):
         return str(resource_id)
