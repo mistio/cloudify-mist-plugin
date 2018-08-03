@@ -8,12 +8,6 @@ plugins:
 data_types:
   cloudify.datatypes.mist.Config:
     properties:
-      mist_username:
-          description: an input for the test
-          default: ''
-      mist_password:
-          description: an input for the test
-          default: ''
       mist_token:
           description: an input for the test
           default: ''
@@ -22,13 +16,16 @@ data_types:
           default: https://mist.io
   cloudify.datatypes.mist.MachineParams:
     properties:
+      machine_id:
+          type: string
+          default: ''
       cloud_id:
           type: string
           default: ''
       name:
           type: string
           default: ''
-      key:
+      key_id:
           type: string
           default: ''
       image_id:
