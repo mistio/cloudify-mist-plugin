@@ -1,142 +1,77 @@
-from time import sleep
-
-from mistclient import MistClient
-from plugin.utils import get_job_id
-
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
+
+from mistclient import MistClient
+
+from plugin.utils import get_job_id
 
 
 class MistConnectionClient(object):
 
-    """Provides functions for getting the Mist Client
-    """
+    def __init__(self, *args, **kwargs):
+        """Return a wrapper instance around mistclient.MistClient
 
-    def __init__(self, **kwargs):
+        This object is just a helper around mistclient.MistClient that helps
+        communicate with the mist.io API.
+
+        The client is bound to a single job_id to group all of the workflow's
+        logs into a single story.
+
+        The client requires that the mist_config property is configured per
+        node template of the respective blueprint so that the client may be
+        authenticated to the mist.io API and instantiated.
+
+        """
         self._client = None
-        self._cloud = None
-        self._machine = None
-        if kwargs.get("properties"):
-            self.properties = kwargs.get("properties")
-            self.ctx = False
-        else:
-            self.properties = ctx.node.properties
-            self.ctx = True
+
+        # Connection parameters.
+        self._uri = self._config.get('mist_uri')
+        self._token = self._config.get('mist_token')
+        self._verify = self._uri.startswith('https')
+
+        # The job_id associated with the current workflow. Required to group
+        # log entries into a single story representing all of the workflow's
+        # actions.
+        self.job_id = get_job_id()
 
     @property
     def client(self):
-        """Represents the MistConnection Client
-        """
+        """Return a cached MistClient connection object"""
         if self._client is None:
-            if self.properties['mist_config'].get("mist_uri"):
-                mist_uri = self.properties['mist_config']["mist_uri"]
-                verify = False
-            else:
-                mist_uri = "https://mist.io"
-                verify = True
-            if self.properties['mist_config'].get("mist_token"):
-                token = self.properties['mist_config']['mist_token']
-                self._client = MistClient(mist_uri=mist_uri,
-                                          api_token=token,
-                                          verify=verify,
-                                          job_id=get_job_id())
-            else:
-                self._client = MistClient(mist_uri=mist_uri,
-                                          email=self.properties['mist_config']['mist_username'],
-                                          password=self.properties['mist_config']['mist_password'],
-                                          job_id=get_job_id())
+            self._client = self._get_connection()
         return self._client
 
     @property
-    def cloud(self):
-        """Represents the Mist Cloud
-        """
-        if self._cloud is None:
-            if self.properties['parameters'].get("cloud_id"):
-                self._cloud = self.client.clouds(
-                    id=self.properties['parameters']['cloud_id'])[0]
-            elif self.properties['parameters'].get("cloud_name"):
-                cloud_search = self.client.clouds(search=self.properties['parameters'][
-                                                  'cloud_name'])
-                if len(cloud_search) > 1:
-                    raise NonRecoverableError("Found more then one cloud with name {0}".format(
-                                              self.properties['parameters']['cloud_name']))
-                elif len(cloud_search) == 0:
-                    raise NonRecoverableError("Did not find cloud with name {0}".format(
-                                              self.properties['parameters']['cloud_name']))
-                self._cloud = cloud_search[0]
-        return self._cloud
+    def _config(self):
+        """Return the settings required to authenticate to the mist.io API"""
+        _config = ctx.node.properties.get('mist_config', {})
+        if not _config:
+            raise NonRecoverableError('Authentication: mist_config missing!')
+        if not _config.get('mist_token'):
+            raise NonRecoverableError('Authentication: mist_token not set!')
+        return _config
 
-    @property
-    def machine(self):
-        """Represents a Mist Machine
-        """
-        self.cloud.update_machines()
-        if self.properties.get('use_external_resource', ''):
-            if self.ctx:
-                ctx.logger.info('use external resource enabled')
-            if not self.properties["resource_id"]:
-                raise NonRecoverableError(
-                    "Cannot use external resource without defining resource_id")
-            machines = self.cloud.machines(id=str(self.properties["resource_id"]))
-            if not len(machines):
-                raise NonRecoverableError(
-                    "External resource not found")
-            if machines[0].info["state"] in ["error", "terminated"]:
-                raise NonRecoverableError(
-                    "External resource state {0}".format(machines[0].info["state"]))
-            return machines[0]
+    def _get_connection(self):
+        """Return an authenticated MistClient connection instance"""
+        return MistClient(mist_uri=self._uri, verify=self._verify,
+                          api_token=self._token, job_id=self.job_id)
 
-        if self.ctx:
-            machine_id = ctx.instance.runtime_properties['machine_id'] or \
-                ctx.node.properties['resource_id']
-            if machine_id:
-                ctx.logger.info('Retrieving machines\' list')
-                machines = []
-                i = 0
-                while not machines and i < 10:
-                    machines = self.cloud.machines(id=machine_id)
-                    sleep(2)
-                    self.cloud.update_machines()
-                    i += 1
-                if machines:
-                    return machines[0]
+    def get_cloud(self, cloud_id):
+        """Return a MistClient Cloud object based on its cloud_id"""
+        clouds = self.client.clouds(id=str(cloud_id))
+        if len(clouds) == 0:
+            raise NonRecoverableError('Cloud %s not found' % cloud_id)
+        if len(clouds) >= 2:
+            raise NonRecoverableError('Got multiple clouds: %s' % clouds)
+        return clouds[0]
 
-        machines = self.cloud.machines(search=self.properties['parameters']["name"])
-        if len(machines) > 1:
-            if self.ctx:
-                ctx.logger.info('Found multiple machines with the same name')
-            for m in machines:
-                if m.name == self.properties['parameters']["name"] and m.info["state"] in ["running", "stopped"]:
-                    machines = [m]
-                    break
-            else:
-                raise NonRecoverableError('Could not find machine')
-
-        if self.ctx:
-            ctx.instance.runtime_properties['machine_id'] = machines[0].info["id"]
-        return machines[0]
-
-    # FIXME
-    def other_machine(self, kwargs):
-        self.cloud.update_machines()
-        if kwargs.get('use_external_resource', ''):
-            if not kwargs["resource_id"]:
-                raise NonRecoverableError(
-                    "Cannot use external resource without defining resource_id")
-            machines = self.cloud.machines(id=str(kwargs["resource_id"]))
-            if not len(machines):
-                raise NonRecoverableError(
-                    "External resource not found")
-            if machines[0].info["state"] in ["error", "terminated"]:
-                raise NonRecoverableError(
-                    "External resource state {0}".format(machines[0].info["state"]))
-            return machines[0]
-
-        machines = self.cloud.machines(search=kwargs["name"])
-        if len(machines) > 1:
-            for m in machines:
-                if m.info["state"] in ["running", "stopped"]:
-                    machines[0] = m
-                    break
+    def get_machine(self, cloud_id, machine_id):
+        """Return a MistClient Machine object"""
+        cloud = self.get_cloud(cloud_id)
+        cloud.update_machines()
+        machines = cloud.machines(id=str(machine_id))
+        if len(machines) == 0:
+            raise NonRecoverableError('Machine %s not found' % machine_id)
+        if len(machines) >= 2:
+            raise NonRecoverableError('Got multiple machines: %s' % machines)
         return machines[0]

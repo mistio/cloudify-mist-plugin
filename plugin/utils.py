@@ -1,5 +1,4 @@
 import os
-import glob
 import json
 import time
 import string
@@ -8,19 +7,14 @@ import random
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 
-from plugin.constants import STORAGE, STORAGE2
+from plugin.constants import STORAGE
 
 
-# TODO Merge with LocalStorageOld, once scale_down workflow is polished.
 class LocalStorage(object):
+    """Access node instances on the local filesystem"""
 
-    def __init__(self, storage=None):
-        storage = glob.glob(storage or STORAGE2)
-        if not storage:
-            raise Exception()
-        if len(storage) > 1:
-            raise Exception()
-        self.storage = storage[0]
+    def __init__(self, storage=STORAGE):
+        self.storage = storage
 
     def get_node_instance(self, instance_id):
         with open(os.path.join(self.storage, instance_id)) as fobj:
@@ -35,69 +29,6 @@ class LocalStorage(object):
         with open(os.path.join(self.storage, host_id), 'w') as fobj:
             fobj.write(json.dumps(instance))
         return instance
-
-
-# TODO Deprecated
-class LocalStorageOld(object):
-    """
-    LocalStorage gives full access to a node instance's properties by reading
-    the instance object directly from file
-
-    This class is meant to be called as such:
-
-        node_instance = LocalStorage.get('kube_master')
-
-    where `kube_master` is the actual node_instance as defined in the
-    respective blueprint. In order to access the runtime properties simply call:
-
-        node_instance.runtime_properties
-
-    which will return the dict of all of the instance's runtime properties
-    """
-    def __init__(self, node):
-        """
-        Searches in local-storage for the file that corresponds to the node
-        instance provided
-        """
-        instance_file = self.fetch_instance_file(node)
-        with open(instance_file, 'r') as _instance:
-            instance_from_file = _instance.read()
-
-        self.instance_from_file = json.loads(instance_from_file)
-
-    @classmethod
-    def get(cls, node):
-        """
-        A class method to initiate the LocalStorage with the specified node
-        """
-        node = cls(node)
-        return node
-
-    @property
-    def runtime_properties(self):
-        """
-        Returns the node instance's runtime properties
-        """
-        return self.instance_from_file['runtime_properties']
-
-    def fetch_instance_file(self, node):
-        """
-        Tries to discover the path of local-storage in order to fetch the
-        required node instance
-        """
-        local_storage = os.path.join('/tmp/templates',
-                                     'mistio-kubernetes-blueprint-[A-Za-z0-9]*',
-                                     STORAGE % node)
-        local_storage = glob.glob(local_storage)
-        if local_storage:
-            node_file = local_storage[0]
-        # TODO: Well, this is weird, but the local-storage exists on a different
-        # path in case a user executes `cfy local` directly from his terminal
-        else:
-            if not os.path.exists(os.path.join('..', STORAGE % node)):
-                raise Exception('Failed to locate local-storage')
-            node_file = os.path.join('..', STORAGE % node)
-        return node_file
 
 
 def wait_for_event(job_id, job_kwargs, timeout=1800):
@@ -122,9 +53,9 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
     """
     ctx.logger.info('Waiting for event %s with kwargs=%s', job_id, job_kwargs)
 
-    # FIXME Re-think this.
+    # FIXME Imported here due to circular dependency issues.
     from plugin.connection import MistConnectionClient
-    client = MistConnectionClient().client
+    conn = MistConnectionClient()
 
     # Mark the beginning of the polling period.
     started_at = time.time()
@@ -133,7 +64,7 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
     # Wait for newly indexed events to become available/searchable.
     for _ in range(30):
         try:
-            client.get_job(job_id)
+            conn.client.get_job(job_id)
         except Exception as exc:
             ctx.logger.debug('Failed to get logs of %s: %r', job_id, exc)
             time.sleep(1)
@@ -142,9 +73,9 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
     else:
         raise
 
-    # Poll for the event with the specified key-values pairs.
+    # Poll for the event with the specified key-value pairs.
     while True:
-        for log in client.get_job(job_id).get('logs', []):
+        for log in conn.client.get_job(job_id).get('logs', []):
             if all([log.get(k) == v for k, v in job_kwargs.iteritems()]):
                 if log.get('error'):
                     msg = log.get('stdout', '') + log.get('extra_output', '')
@@ -157,25 +88,6 @@ def wait_for_event(job_id, job_kwargs, timeout=1800):
             raise NonRecoverableError('Time threshold exceeded!')
 
         time.sleep(10)
-
-
-def get_resource_id():
-    """
-    Returns the a resource's ID. If the user doesn't provide one, this method
-    will create one instead
-    :param node_properties: The node properties dictionary
-    :return resource_id: A string
-    """
-
-    if ctx.node.properties['resource_id']:
-        return ctx.node.properties['resource_id']
-    elif 'private_key_path' in ctx.node.properties:
-        directory_path, filename = os.path.split(ctx.node.properties[
-                                                  'private_key_path'])
-        resource_id, filetype = filename.split('.')
-        return resource_id
-
-    return '{0}-{1}'.format(ctx.deployment.id, ctx.instance.id)
 
 
 def generate_name(stack, role):
@@ -216,3 +128,43 @@ def get_stack_name():
         with open('/tmp/cloudify-mist-plugin-stack', 'w') as sf:
             sf.write(stack_name)
     return stack_name
+
+
+# TODO Rename `machine_id` to `resource_id` so that it's more generic.
+def is_resource_external(properties=None):
+    """Return True if resource is external
+
+    A resource is considered external if it already exists, so it won't be
+    created. The check is performed against the node's properties. Another
+    properties dict may be optionally passed to this method, which will be
+    used instead of `ctx.node.properties`.
+
+    """
+    properties = properties or ctx.node.properties
+    return bool(properties.get('parameters', {}).get('machine_id', '') or
+                properties.get('use_external_resource', False))
+
+
+def get_external_resource_id(properties=None):
+    """Return the id of an external resource
+
+    A resource is considered external if it already exists, so it won't be
+    created. The check is performed against the node's properties. Another
+    properties dict may be optionally passed to this method, which will be
+    used instead of `ctx.node.properties`.
+
+    If the node instance of the current execution thread isn't external,
+    then an exception will be thrown. Otherwise, it is expected that the
+    resource's id can be found under the `resource_id` key.
+
+    """
+    properties = properties or ctx.node.properties
+    if is_resource_external(properties):
+        if properties.get('use_external_resource'):
+            if not properties.get('resource_id'):
+                raise NonRecoverableError('resource_id missing')
+            return properties['resource_id']
+        if properties.get('parameters', {}).get('machine_id'):
+            return properties['parameters']['machine_id']
+        raise NonRecoverableError('Parameter machine_id missing')
+    raise NonRecoverableError('use_external_resource is False')

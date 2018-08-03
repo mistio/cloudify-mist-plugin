@@ -85,7 +85,7 @@ def creation_validation(**_):
 
 
 def create_machine(properties, skip_post_deploy_validation=False, **kwargs):
-    """Create a machine with the given parameters by invoking the MistClient.
+    """Create a machine with the given parameters by invoking the MistClient
 
     The `properties` must include all parameters required for the machine's
     creation. These parameters are supposed to be populated mainly by the
@@ -102,68 +102,70 @@ def create_machine(properties, skip_post_deploy_validation=False, **kwargs):
     stack_name = utils.get_stack_name()
     node_type = kwargs.get('node_type', 'instance')
 
-    mist_client = connection.MistConnectionClient()
-    try:
-        client = mist_client.client
-    except:
-        raise NonRecoverableError('User authentication failed')
+    conn = connection.MistConnectionClient()
+
+    # The job_id associated with the current workflow.
+    job_id = conn.job_id
 
     params = properties['parameters']
-    cloud_id = params.pop('cloud_id')
-    cloud = client.clouds(id=cloud_id)[0]
 
-    # # TODO Decide how to handle this properly.
-    # if ctx.node.properties['use_external_resource']:
-    #     machine = mist_client.machine
-    #     ctx.instance.runtime_properties['mist_type'] = 'machine'
-    #     ctx.instance.runtime_properties['info'] = machine.info
-    #     public_ips = machine.info.get('public_ips', [])
-    #     if public_ips:
-    #         ctx.instance.runtime_properties['ip'] = public_ips[0]
-    #         ctx.instance.runtime_properties['networks'] = public_ips
-    #     return
+    if utils.is_resource_external(properties):
+        cloud_id = get_cloud_id(properties)
+        machine_id = get_machine_id(properties)
+        cloud = conn.get_cloud(cloud_id)
+        ctx.instance.runtime_properties['machine_id'] = str(machine_id)
+        ctx.instance.runtime_properties['use_external_resource'] = True
+    else:
+        # Get the cloud on which to provision the new machines.
+        cloud_id = params.pop('cloud_id')
+        cloud = conn.get_cloud(cloud_id)
 
-    try:
-        name = (
-            params.pop('name', '') or  # Get or auto-generate.
-            utils.generate_name(stack_name, node_type)
-        )
-        key = params.pop('key') or ''  # Avoid None.
-        size_id = params.pop('size_id')
-        image_id = params.pop('image_id')
-        location_id = params.pop('location_id')
-        job = cloud.create_machine(name, key, image_id, location_id, size_id,
-                                   async=True, **params)
-    except Exception as exc:
-        raise NonRecoverableError(exc)
+        # Ensure no machine_id is provided upon machine creation.
+        params.pop('machine_id', None)
 
-    # Wait for machine creation to finish.
-    event = utils.wait_for_event(
-        job_id=job['job_id'],
-        job_kwargs={
-            'action': 'machine_creation_finished',
-            'machine_name': name
-        }
-    )
-    ctx.instance.runtime_properties['machine_id'] = event['machine_id']
+        # Provision new machine.
+        try:
+            name = (
+                params.pop('name', '') or  # Get or auto-generate.
+                utils.generate_name(stack_name, node_type)
+            )
+            key = params.pop('key_id') or ''  # Avoid None.
+            size_id = params.pop('size_id')
+            image_id = params.pop('image_id')
+            location_id = params.pop('location_id')
+            job = cloud.create_machine(name, key, image_id, location_id,
+                                       size_id, async=True, **params)
+        except Exception as exc:
+            raise NonRecoverableError(exc)
 
-    # Wait for machine's post-deploy configuration to finish.
-    if key and not skip_post_deploy_validation:
+        # Wait for machine creation to finish.
         event = utils.wait_for_event(
             job_id=job['job_id'],
             job_kwargs={
-                'action': 'post_deploy_finished',
-                'machine_id': ctx.instance.runtime_properties['machine_id'],
-            }
+                'action': 'machine_creation_finished',
+                'machine_name': name
+            },
+            timeout=600
         )
+        ctx.instance.runtime_properties['machine_id'] = event['machine_id']
+        ctx.instance.runtime_properties['use_external_resource'] = False
+
+        # Wait for machine's post-deploy configuration to finish.
+        if key and not skip_post_deploy_validation:
+            event = utils.wait_for_event(
+                job_id=job['job_id'],
+                job_kwargs={
+                    'action': 'post_deploy_finished',
+                    'machine_id': event['machine_id'],
+                }
+            )
 
     # Update the node instance's runtime properties.
-    ctx.instance.runtime_properties['machine_name'] = name
-    ctx.instance.runtime_properties['job_id'] = job['job_id']
-
-    cloud.update_machines()
     machine_id = ctx.instance.runtime_properties['machine_id']
-    machine = cloud.machines(id=machine_id)[0]
+    machine = conn.get_machine(cloud_id, machine_id)
+
+    ctx.instance.runtime_properties['job_id'] = job_id
+    ctx.instance.runtime_properties['machine_name'] = machine.name
 
     ctx.instance.runtime_properties['info'] = machine.info
     ctx.instance.runtime_properties['cloud_id'] = cloud_id
@@ -179,28 +181,45 @@ def create(**kwargs):
 @operation
 def start(**_):
     try:
-        connection.MistConnectionClient().machine.start()
+        conn = connection.MistConnectionClient()
+        machine = conn.get_machine(
+            cloud_id=ctx.instance.runtime_properties['cloud_id'],
+            machine_id=ctx.instance.runtime_properties['machine_id']
+        )
+        machine.start()
     except Exception as exc:
         ctx.logger.error('Failed to start machine. %s', exc)
-    if ctx.node.properties.get("monitoring"):
-        connection.MistConnectionClient().machine.enable_monitoring()
-        ctx.logger.info('Monitoring enabled')
+
+    # FIXME 1) This is not currently used. 2) Should it be here? 3) This
+    # should probably be passed to the create_machine method.
+    # if ctx.node.properties.get("monitoring"):
+    #     connection.MistConnectionClient().machine.enable_monitoring()
+    #     ctx.logger.info('Monitoring enabled')
 
 
 @operation
 def stop(**_):
     try:
-        connection.MistConnectionClient().machine.stop()
-        ctx.logger.info('Machine stopped')
+        conn = connection.MistConnectionClient()
+        machine = conn.get_machine(
+            cloud_id=ctx.instance.runtime_properties['cloud_id'],
+            machine_id=ctx.instance.runtime_properties['machine_id']
+        )
+        machine.stop()
     except Exception as exc:
         ctx.logger.error('Failed to stop machine. %s', exc)
 
 
 @operation
 def delete(**_):
-    if not ctx.node.properties['use_external_resource']:
+    if not ctx.instance.runtime_properties.get('use_external_resource'):
         try:
-            connection.MistConnectionClient().machine.destroy()
+            conn = connection.MistConnectionClient()
+            machine = conn.get_machine(
+                cloud_id=ctx.instance.runtime_properties['cloud_id'],
+                machine_id=ctx.instance.runtime_properties['machine_id']
+            )
+            machine.destroy()
         except Exception as exc:
             ctx.logger.error('Failed to destroy machine. %s', exc)
     else:
@@ -209,22 +228,138 @@ def delete(**_):
 
 @operation
 def run_script(**kwargs):
-    client = connection.MistConnectionClient().client
-    machine = connection.MistConnectionClient().machine
+    conn = connection.MistConnectionClient()
+    machine = conn.get_machine(
+        cloud_id=ctx.instance.runtime_properties['cloud_id'],
+        machine_id=ctx.instance.runtime_properties['machine_id']
+    )
     kwargs['cloud_id'] = machine.cloud.id
     kwargs['machine_id'] = str(machine.id)
     script_params = kwargs.pop("params", "")
     kwargs.pop('ctx', None)
     if kwargs.get("script_id", ''):
         try:
-            job_id = client.run_script(**kwargs)
+            job_id = conn.client.run_script(**kwargs)
         except Exception as exc:
             raise NonRecoverableError(exc)
     else:
         try:
-            response = client.add_and_run_script(machine.cloud.id,
-                                                 script_params=script_params,
-                                                 fire_and_forget=False,
-                                                 **kwargs)
+            response = conn.client.add_and_run_script(
+                machine.cloud.id, script_params=script_params,
+                fire_and_forget=False, **kwargs
+            )
         except Exception as exc:
             raise NonRecoverableError(exc)
+
+
+def get_cloud_id(properties=None):
+    """Return the cloud id of the current execution thread
+
+    The search is performed against the current node's properties. Another
+    properties dict may be optionally passed to this method, which will be
+    used instead of `ctx.node.properties`. Note that passing a custom dict
+    of properties is meant for advanced use cases, such as overriding the
+    immutable, built-in `ctx.node.properties`, and SHOULD NOT be opted for.
+
+    Note that this method does not take into account the runtime properties
+    of the current node instance, while searching for the cloud_id. If one
+    wants to search the runtime properties, then he should do so explicitly
+    outside this method.
+
+    This method SHOULD be primarily invoked during the early stages of the
+    install workflow, such as the `create_machine` operation, in order to
+    discover the cloud_id of the resource in the current execution thread,
+    whether the resource is external or not. Down the road, it is advised
+    that the `ctx.instance.runtime_properties` dict is used to look-up the
+    corresponding resource identifiers. For instance, the `create_machine`
+    operation *always* adds the following two properties:
+
+        ctx.instance.runtime_properties['cloud_id']
+        ctx.instance.runtime_properties['machine_id']
+
+    Thus, in lifecycle operations other than the `create` operation of the
+    install workflow, one SHOULD use the aforementioned runtime properties
+    instead of invoking this method.
+
+    If no cloud_id can be found, then a `NonRecoverableError` will be raised.
+
+    """
+    properties = properties or ctx.node.properties
+
+    # If the resource does not already exist, then search its node properties.
+    if not utils.is_resource_external(properties):
+        cloud_id = properties.get('parameters', {}).get('cloud_id')
+        if not cloud_id:
+            raise NonRecoverableError('cloud_id missing from node properties')
+        return cloud_id
+
+    # If the resource exists, then get its `resource_id`. The following method
+    # will raise an exception, if the resource of the current execution thread
+    # is not external.
+    resource_id = utils.get_external_resource_id(properties)
+    ctx.logger.info('Looking for cloud_id of existing machine %s', resource_id)
+
+    if isinstance(resource_id, (basestring, int)):
+        cloud_id = properties.get('parameters', {}).get('cloud_id')
+        if not cloud_id:
+            raise NonRecoverableError('cloud_id missing from node properties')
+        return str(cloud_id)
+
+    if isinstance(resource_id, dict):
+        cloud_id = resource_id.get('cloud_id')
+        if not cloud_id:
+            raise NonRecoverableError('Failed to get cloud_id %s', resource_id)
+        return str(cloud_id)
+
+    raise NonRecoverableError('Could not find cloud_id')
+
+
+def get_machine_id(properties=None):
+    """Return the machine id of the current execution thread
+
+    The search is performed against the current node's properties. Another
+    properties dict may be optionally passed to this method, which will be
+    used instead of `ctx.node.properties`. Note that passing a custom dict
+    of properties is meant for advanced use cases, such as overriding the
+    immutable, built-in `ctx.node.properties`, and SHOULD NOT be opted for.
+
+    Note that this method does not take into account the runtime properties
+    of the current node instance, while searching for a machine_id. If one
+    wants to search the runtime properties, then he should do so explicitly
+    outside this method.
+
+    This method SHOULD be primarily invoked during the early stages of the
+    install workflow, such as the `create_machine` operation, in order to
+    discover the EXTERNAL machine_id in the current execution thread. This
+    method SHOULD NOT be used unless the resource is external since the id
+    of a machine will not be available until the `create` operation is done.
+
+    Down the road, it is advised that the `ctx.instance.runtime_properties`
+    dict is used to look-up the corresponding resource identifiers instead.
+    The `create_machine` operation *always* adds the following two properties:
+
+        ctx.instance.runtime_properties['cloud_id']
+        ctx.instance.runtime_properties['machine_id']
+
+    Thus, in lifecycle operations other than the `create` operation of the
+    install workflow, one SHOULD use the aforementioned runtime properties
+    instead of invoking this method.
+
+    If no machine_id is found, then a `NonRecoverableError` will be raised.
+
+    """
+    properties = properties or ctx.node.properties
+
+    if not utils.is_resource_external(properties):
+        raise NonRecoverableError('Cannot get id of non-external machine')
+
+    resource_id = utils.get_external_resource_id(properties)
+    ctx.logger.info('Looking for machine_id in parameter %s', resource_id)
+
+    if isinstance(resource_id, (basestring, int)):
+        return str(resource_id)
+
+    if isinstance(resource_id, dict):
+        return str(resource_id.get('machine_id'))
+
+    raise NonRecoverableError('Could not find machine_id')
