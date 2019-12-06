@@ -164,7 +164,7 @@ def get_external_resource_id(properties=None):
             if not properties.get('resource_id'):
                 raise NonRecoverableError('resource_id missing')
             return properties['resource_id']
-        if properties.get('parameters', {}).get('machine_id'):
-            return properties['parameters']['machine_id']
-        raise NonRecoverableError('Parameter machine_id missing')
+        if properties.get('parameters', {}).get('external_id'):
+            return properties['parameters']['external_id']
+        raise NonRecoverableError('Parameter external_id missing')
     raise NonRecoverableError('use_external_resource is False')
