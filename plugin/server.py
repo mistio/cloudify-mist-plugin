@@ -147,7 +147,7 @@ def create_machine(properties, skip_post_deploy_validation=False, **kwargs):
             },
             timeout=600
         )
-        ctx.instance.runtime_properties['machine_id'] = event['machine_id']
+        ctx.instance.runtime_properties['machine_id'] = event['external_id']
         ctx.instance.runtime_properties['use_external_resource'] = False
 
         # Wait for machine's post-deploy configuration to finish.
@@ -156,7 +156,7 @@ def create_machine(properties, skip_post_deploy_validation=False, **kwargs):
                 job_id=job['job_id'],
                 job_kwargs={
                     'action': 'post_deploy_finished',
-                    'machine_id': event['machine_id'],
+                    'machine_id': event['external_id'],
                 }
             )
 
