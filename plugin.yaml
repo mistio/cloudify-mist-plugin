@@ -94,7 +94,7 @@ data_types:
           type: string
           default: ''
       location_id:
-          descsription: >
+          description: >
             The location/region to create resources in. If the IaaS supports regions,
             the region will have to be specified by its code and letter identifiers,
             such as "us-east-1" for US East (N. Virginia) in case of Amazon Services.
