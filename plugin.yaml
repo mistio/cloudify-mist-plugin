@@ -121,7 +121,7 @@ data_types:
             A list of networks that this machine belongs to
           default: []
       docker_command:
-          desciption: >
+          description: >
             Run a docker command 
           type: string
           default: ''
