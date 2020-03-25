@@ -73,6 +73,7 @@ def main():
         # TODO: Pass as ENV variables.
         with open('/tmp/cloudify-mist-plugin-job', 'w') as jf:
             jf.write(str(stack['job_id']))
+
         # Store the Stack's name
         with open('/tmp/cloudify-mist-plugin-stack', 'w') as sf:
             sf.write(str(stack['name']))
@@ -84,39 +85,10 @@ def main():
             f.close()
             entrypoint = "template.yaml"
         elif location_type == "github":
-            repo = template["template"].replace("https://github.com/", "")
-            repo = repo.split("tree/")
-            if len(repo) > 1:
-                branch = repo[1]
-            else:
-                branch = "master"
-            repo = repo[0]
-            if repo.endswith("/"):
-                repo = repo.rstrip("/")
-            sha_path = 'https://api.github.com/repos/%s/commits' % repo
-            headers = {}
-            resp = requests.get(sha_path, headers=headers)
-            resp = resp.json()
-            # latest_sha = resp[0]["sha"]
-            tarball_path = 'https://api.github.com/repos/%s/tarball/%s' % (repo, branch)
-            resp = requests.get(tarball_path, headers=headers,
-                                allow_redirects=False)
-            if resp.ok and resp.is_redirect and 'location' in resp.headers:
-                path = resp.headers['location']
-            else:
-                print mksep('end')
-                print mksep('summary')
-                exc = Exception("Couldn't download git project")
-                log.critical(exc)
-                print mksep('end')
-                return -1
-            path = download(path)
-            try:
-                unpack(path, '/tmp/templates/')
-            except:
-                pass
-            else:
-                path = find_path('/tmp/templates', template["entrypoint"])
+            os.mkdir("/tmp/templates/")
+            os.chdir("/tmp/templates/")
+            shellcmd(os.getenv("MIST_GIT_CLONE_COMMAND"))
+            path = find_path("/tmp/templates", template["entrypoint"])
 
         folder = find_folder('/tmp/templates')
         os.chdir(folder)
@@ -167,6 +139,9 @@ def main():
         log.critical(exc)
         exit_code = -1
         error = str(exc)
+        # Set `node_instances` to None to prevent re-setting them to `[]` in
+        # case the workflow fails.
+        node_instances = None
 
     client.end_job(stack['job_id'],
                    exit_code=exit_code,
@@ -317,7 +292,7 @@ def parse_args():
                             help="Api token to use for authentication.")
         parser.add_argument('-v', '--verbose', action='store_true',
                             help="Show debug logs.")
-        args = parser.parse_args()
+        return parser.parse_args()
     except ImportError:
         # Python 2.6 does not have argparse
         import optparse
@@ -335,6 +310,7 @@ def parse_args():
                           help="Api token to use for authentication.")
         args, list_args = parser.parse_args()
         args.stack_id = list_args[0]
+
     return args
 
 

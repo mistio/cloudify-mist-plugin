@@ -1,7 +1,11 @@
 env/
+
+dist/
+build/
+
+.idea/
 .*.sw[op]
 *.py[cod]
-plugin/tests/blueprint/blueprint.yaml
-build/
-dist/
+
 cloudify_mist_plugin.egg-info/
+plugin/tests/blueprint/blueprint.yaml

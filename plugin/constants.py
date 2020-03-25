@@ -1,16 +1,16 @@
-INSTANCE_REQUIRED_PROPERTIES = [
-    'mist_username',
-    'mist_password',
-    'name',
-    'key',
+INSTANCE_REQUIRED_PROPERTIES = (
     'cloud_id',
-    'image_id',
+    'key_id',
     'size_id',
-    'location_id'
+    'image_id',
+    'location_id',
+    'networks',
+)
+
+STORAGE = (
+    "/tmp/templates/kubernetes-blueprint/local-storage/local/node-instances"
+)
+
+CLOUD_INIT_PROVIDERS = [
+    "libvirt"
 ]
-
-STORAGE = 'local-storage/local/node-instances/%s_[A-Za-z0-9]*'
-
-CREATE_TIMEOUT = 60 * 10
-SCRIPT_TIMEOUT = 60 * 30
-

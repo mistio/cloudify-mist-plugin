@@ -7,6 +7,10 @@ from cloudify.exceptions import NonRecoverableError
 from cloudify.decorators import operation
 
 
+# TODO Are methods like `_get_path_to_key_file()` necessary, since we do not
+# save keys on the local filesystem?
+
+
 @operation
 def creation_validation(**_):
     """ This validates all nodes before bootstrap.
@@ -44,7 +48,7 @@ def creation_validation(**_):
 def create(**kwargs):
     """Creates a keypair."""
 
-    mist_client = connection.MistConnectionClient().client
+    conn = connection.MistConnectionClient()
 
     if _create_external_keypair():
         return
@@ -53,16 +57,16 @@ def create(**kwargs):
     ctx.instance.runtime_properties["key"] = key_pair_name
     ctx.instance.runtime_properties["mist_type"] = "keypair"
 
-    kp = mist_client.keys(search=key_pair_name)
+    kp = conn.client.keys(search=key_pair_name)
     if len(kp):
         kp = kp[0]
         return  # if key already in mist.io, skip
     else:
         key_pair_name = ctx.node.properties["key_name"]  # commented out in plugin?
-        private = mist_client.generate_key()
-        mist_client.add_key(key_name=key_pair_name, private=private)
-        mist_client.update_keys()
-        kp = mist_client.keys(search=key_pair_name)[0]
+        private = conn.client.generate_key()
+        conn.client.add_key(key_name=key_pair_name, private=private)
+        conn.client.update_keys()
+        kp = conn.client.keys(search=key_pair_name)[0]
 
     _save_key_pair(kp)
 
@@ -70,7 +74,7 @@ def create(**kwargs):
 @operation
 def delete(**kwargs):
     """Deletes a keypair."""
-    mist_client = connection.MistConnectionClient().client
+    conn = connection.MistConnectionClient()
 
     key_pair_name = get_external_resource_id_or_raise('delete key pair')
 
@@ -79,7 +83,7 @@ def delete(**kwargs):
 
     if key_pair_name:
         try:
-            mist_client.keys(search=key_pair_name)[0].delete()
+            conn.client.keys(search=key_pair_name)[0].delete()
         except Exception as exc:
             raise NonRecoverableError('{0}'.format(str(exc)))
         unassign_runtime_property_from_resource('mist_resource_id')
@@ -193,9 +197,9 @@ def _get_key_pair_by_id(key_pair_id):
     :returns The mist keypair object.
     :raises NonRecoverableError: If Mist finds no matching key pairs.
     """
-    mist_client = connection.MistConnectionClient().client
+    conn = connection.MistConnectionClient()
 
-    key_pairs = mist_client.keys(search=key_pair_id)
+    key_pairs = conn.client.keys(search=key_pair_id)
 
     return key_pairs[0] if key_pairs else None
 
