@@ -133,6 +133,16 @@ def create_machine(properties, skip_post_deploy_validation=False, **kwargs):
             size_id = params.pop('size_id')
             image_id = params.pop('image_id')
             location_id = params.pop('location_id')
+                    # Linode requires the location as the `location_name` field.
+            if cloud.provider == 'linode':
+                params['location_name'] = location_id
+            if cloud.provider == 'gce':
+                for location in cloud.locations:
+                    if location['id'] == location_id:
+                        params['location_name'] = location['name']
+                for image in cloud.images:
+                    if image_id == image['id']:
+                        params['image_extra'] = image['extra']
             job = cloud.create_machine(name, key, image_id, location_id,
                                        size_id, async=True, **params)
         except Exception as exc:
