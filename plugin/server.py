@@ -166,7 +166,7 @@ def create_machine(properties, skip_post_deploy_validation=False, **kwargs):
                 job_id=job['job_id'],
                 job_kwargs={
                     'action': 'post_deploy_finished',
-                    'machine_id': event['external_id'],
+                    'external_id': event['external_id'],
                 }
             )
 
