@@ -117,11 +117,10 @@ def main():
         cmdret.append(shellcmd(cmd, break_on_error=False))
         exit_code = cmdret[-1][0]
         for instance in os.listdir(local_instances):
-#            print mksep('end')
-#            print mksep('cloudifyinstance')
             i = open(os.path.join(local_instances, instance)).read()
-#            print i
-            node_instances.append(json.loads(i))
+            instance_dict = json.loads(i)
+            if instance_dict['state'] != 'deleted':
+                node_instances.append(instance_dict)
 
         print mksep('end')
         print mksep('summary')
