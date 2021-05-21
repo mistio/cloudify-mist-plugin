@@ -118,7 +118,9 @@ def main():
         exit_code = cmdret[-1][0]
         for instance in os.listdir(local_instances):
             i = open(os.path.join(local_instances, instance)).read()
-            node_instances.append(json.loads(i))
+            instance_dict = json.loads(i)
+            if instance_dict['state'] != 'deleted':
+                node_instances.append(instance_dict)
 
         print mksep('end')
         print mksep('summary')
