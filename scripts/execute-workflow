@@ -96,14 +96,14 @@ def main():
         f.write(json.dumps(inputs['install']))
         f.close()
         cmd = 'cfy local init -p {0} -i inputs.json'.format(path)
-        local_instances = os.path.join(folder,
-                                       "local-storage/local/node-instances")
+        local_instances_dir = os.path.join(
+            folder, "local-storage/local/node-instances")
         cmdret.append(shellcmd(cmd, break_on_error=False))
         if stack["node_instances"]:
             shutil.rmtree('local-storage/local/node-instances')
             os.mkdir("local-storage/local/node-instances")
             for instance in stack["node_instances"]:
-                data = open(os.path.join(local_instances, instance["id"]), "w")
+                data = open(os.path.join(local_instances_dir, instance["id"]), "w")
                 data.write(json.dumps(instance))
                 data.close()
         print mksep('end')
@@ -116,10 +116,11 @@ def main():
             cmd = cmd + " -p workflow_inputs.json"
         cmdret.append(shellcmd(cmd, break_on_error=False))
         exit_code = cmdret[-1][0]
-        for instance in os.listdir(local_instances):
-            i = open(os.path.join(local_instances, instance)).read()
+        local_instances = os.listdir(local_instances_dir)
+        for instance in local_instances:
+            i = open(os.path.join(local_instances_dir, instance)).read()
             instance_dict = json.loads(i)
-            if instance_dict['state'] != 'deleted':
+            if instance_dict['state'] != 'deleted' or len(local_instances) == 2:
                 node_instances.append(instance_dict)
 
         print mksep('end')
