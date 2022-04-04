@@ -12,7 +12,7 @@ RUN apk add --update --no-cache \
     openssl-dev \
     py-cryptography
 
-RUN pip install --no-cache cloudify==3.3
+RUN pip install --no-cache cloudify==3.3 certifi
 
 COPY ./plugin/mist.client/ /opt/cloudify-mist-plugin/plugin/mist.client/
 
